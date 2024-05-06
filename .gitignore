@@ -241,5 +241,5 @@ fabric.properties
 .idea/
 
 .secret.txt
-
+*/migrations
 .DS_Store
