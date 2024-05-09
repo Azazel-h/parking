@@ -1,36 +1,98 @@
+{% extends "base.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>{% block title %}{% endblock %}</title>
+{% block title %}
+    Главная
+{% endblock %}
 
-    {% block tab_icon %}
-    {% endblock %}
+{% block content %}
 
-    <meta charset="UTF-8"/>
+    <style>
+        body, html {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <div id="YMapsID" style="height: 100%; width: 100%;"></div>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <script type="text/javascript">
+        // Функция ymaps.ready() будет вызвана, когда
+        // загрузятся все компоненты API, а также когда будет готово DOM-дерево.
+        ymaps.ready(init);
 
-    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
-            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-            crossorigin="anonymous"></script>
+        function init() {
+            // Создание карты.
+            var myMap = new ymaps.Map("YMapsID", {
+                // Координаты центра карты.
+                // Порядок по умолчанию: «широта, долгота».
+                // Чтобы не определять координаты центра карты вручную,
+                // воспользуйтесь инструментом Определение координат.
+                center: [55.76, 37.64],
+                // Уровень масштабирования. Допустимые значения:
+                // от 0 (весь мир) до 19.
+                zoom: 9,
+                controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']
+            });
+        }
+    </script>
 
-    {% block head %}{% endblock %}
-</head>
-<body>
-{% include 'layout/navbar.html' with user=user %}
 
-<div id="main-container" class="container py-5">
-    {% block content %}{% endblock %}
-</div>
+    {#    <script>#}
+    {#        var myMap;#}
+    {#        ymaps.ready(function () {#}
+    {#            myMap = new ymaps.Map("YMapsID", {#}
+    {#                center: [55.76, 37.64],#}
+    {#                zoom: 9,#}
+    {#                controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']#}
+    {#            });#}
+    {##}
+    {#            var search = myMap.controls.get('searchControl');#}
+    {#            search.events.add("resultselect", function (result) {#}
+    {#                console.log(search.getResultsArray()[result.get('index')].geometry.getCoordinates())#}
+    {#                console.log('request: ' + search.getRequestString());#}
+    {#            });#}
+    {##}
+    {#            {% for i in sharings %}#}
+    {#                var myGeoObject = new ymaps.Placemark([{{ i.crds_lot }}, {{ i.crds_lat }}],#}
+    {#                    {#}
+    {#                        balloonContent:#}
+    {#                            {% if user.is_authenticated %}#}
+    {#                                    '<div class="card">\n' +#}
+    {#                                    '    <div class="card-body">\n' +#}
+    {#                                    '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'share_page' key=i.id %}"> {{ i.address }} </a></h6>\n' +#}
+    {#                                    {% if i.free_pbs <= 0 or session_notification %}#}
+    {#                                        '    <h4 class="card-title"><span class="text-secondary"> Недоступно </h4>\n' +#}
+    {#                                    {% endif %}#}
+    {#                                    {% if i.free_pbs > 0 and not session_notification %}#}
+    {#                                        '        <a href="{% url 'ordering' key=i.id %}" class="btn btn-primary mb-1 btn-lg btn-block"> Получить Powerbank </a>\n'#}
+    {#                                        +#}
+    {#                                    {% endif %}#}
+    {#                                    {% if user.is_superuser %}#}
+    {#                                        '        <a href="#" class="btn btn-warning mb-1 btn-sm btn-block"> Изменить точку </a>\n'#}
+    {#                                        +#}
+    {#                                    {% endif %}#}
+    {#                                    '</div>\n' +#}
+    {#                                    '</div>'#}
+    {#                            {% else %}#}
+    {#                                '<div class="card">\n' +#}
+    {#                                        '    <div class="card-body">\n' +#}
+    {#                                    '        <h4 class="card-title"> Вам нужно сначала войти на сайт! </h4>\n' +#}
+    {#                                    '        <a href="{% url 'login' %}" class="btn btn-primary"> Войти </a>\n' +#}
+    {#                                    '    </div>\n' +#}
+    {#                                    '</div>'#}
+    {#                            {% endif %}#}
+    {#                    }, {#}
+    {#                        iconLayout: 'default#image',#}
+    {#                        {% load static %}#}
+    {#                        {% if i.free_pbs > 0 and not session_notification %}#}
+    {#                            iconImageHref: '<i class="bi-alarm"></i>#}
+    {#                        {% else %}#}
+    {#                            iconImageHref: '<i class="bi-alarm"></i>'#}
+    {#                        {% endif %}#}
+    {#                    });#}
+    {#                myMap.geoObjects.add(myGeoObject);#}
+    {#            {% endfor %}#}
+    {#        });#}
+    {#    </script>#}
 
-{% include 'layout/footer.html' %}
-
-{% block scripts %}{% endblock %}
-</body>
-</html>
+{% endblock %}

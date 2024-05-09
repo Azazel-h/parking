@@ -1,7 +1,7 @@
 from django.urls import include, path
 
-from accounts import views
+from booking import views
 
-# urlpatterns = [
-#     path("", ),
-# ]
+urlpatterns = [
+    path("add/", views.AddBookingView.as_view()),
+]
