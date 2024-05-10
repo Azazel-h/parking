@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from parking_area.models import Parking
+from parking_area.models import ParkingArea
 
 
 class ParkingAdmin(admin.ModelAdmin):
@@ -14,4 +14,4 @@ class ParkingAdmin(admin.ModelAdmin):
     list_filter = ("address", "manager")
 
 
-admin.site.register(Parking, ParkingAdmin)
+admin.site.register(ParkingArea, ParkingAdmin)

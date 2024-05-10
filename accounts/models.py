@@ -6,7 +6,7 @@ from django.contrib.auth.models import (
 )
 from django.db import models
 
-from booking.models import Parking
+from booking.models import ParkingArea
 
 
 class CustomUser(AbstractUser):
@@ -21,6 +21,6 @@ class Car(models.Model):
         CustomUser, on_delete=models.CASCADE, blank=False, null=False
     )
     current_parking = models.ForeignKey(
-        Parking, on_delete=models.CASCADE, blank=True, null=True
+        ParkingArea, on_delete=models.CASCADE, blank=True, null=True
     )
     car_number = models.CharField(max_length=20)
