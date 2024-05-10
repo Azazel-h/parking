@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU"
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU&coordorder=latlong"
             type="text/javascript"></script>
 {% endblock %}
 
@@ -11,19 +11,11 @@
 {% endblock %}
 
 {% block content %}
-    <style>
-        body, html {
-            width: 100%;
-            height: 85%;
-        }
-    </style>
     <div class="container card card-body content">
-        <form method="POST">
+        <form method="POST" id="post-form">
             {% csrf_token %}
             {{ form | crispy }}
-            <div class="form-group">
-                <input type="submit" class="btn btn-lg btn-success" value="Создать" onclick="get_info()">
-            </div>
+            <button type="button" id="post-btn" class="btn btn-lg btn-success">Создать</button>
         </form>
     </div>
 
@@ -36,46 +28,35 @@
                 placemark;
         }
 
-        function get_info() {
-            var request = $('#suggest').val();
+        $(document).on('click', '#post-btn', function (e) {
+            let request = $('#suggest').val();
             console.log(request)
             ymaps.geocode(request).then(
                 function (res) {
-                    var coords = res.geoObjects.get(0).geometry.getCoordinates()
-                    console.log(coords)
+                    let coords = res.geoObjects.get(0).geometry.getCoordinates()
                     console.log(coords[0])
                     console.log(coords[1])
-                    
-                    var all_slots = $('#all_slots').val();
-                    var price = $('#price').val();
-                    var address = $('#address').val();
-                    var manager = $('#manager').val();
-                    send(coords, all_slots, address, price, manager)
+                    let _form = $("form").serialize() + '&longitude=' + JSON.stringify(coords[1]) + '&latitude=' + JSON.stringify(coords[0])
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url "add-parking-area" %}",
+                        data: _form,
+                        success: function (response) {
+                            console.log(response)
+                            alert("Паркова успешно добавлена.");
+                        },
+                        error: function (response) {
+                            alert(response);
+                        }
+                    })
                 },
+
                 function (err) {
                     alert('Ошибка');
                     console.log(err)
                 }
             );
-        }
-
-        function send(coords, all_slots, address, price, manager) {
-            $.ajax({
-                type: "POST",
-                url: "/parking/add/",
-                data: {
-                    latitude: coords[1],
-                    longitude: coords[0],
-                    all_slots: all_slots,
-                    address: address,
-                    price: price,
-                    manager: manager,
-                    csrfmiddlewaretoken: '{{ csrf_token }}'
-                },
-                success: function (response) {
-                    alert(response);
-                }
-            })
-        }
+        })
     </script>
 {% endblock %}

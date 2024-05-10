@@ -21,7 +21,7 @@
                 {% if user.is_authenticated %}
                     {% if user.is_superuser %}
                         {% block add_parking_tab %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'add_parking_area' %}"> Добавить
+                            <li class="nav-item"><a class="nav-link" href="{% url 'add-parking-area' %}"> Добавить
                                 парковку </a></li>
                         {% endblock %}
                     {% endif %}

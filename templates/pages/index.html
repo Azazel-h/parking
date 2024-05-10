@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU"
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU&coordorder=latlong"
             type="text/javascript"></script>
 {% endblock %}
 {% load static %}
@@ -23,18 +23,10 @@
     <script type="text/javascript">
         // Функция ymaps.ready() будет вызвана, когда
         // загрузятся все компоненты API, а также когда будет готово DOM-дерево.
-        ymaps.ready(init);
-
-        function init() {
-            // Создание карты.
-            var myMap = new ymaps.Map("YMapsID", {
-                // Координаты центра карты.
-                // Порядок по умолчанию: «широта, долгота».
-                // Чтобы не определять координаты центра карты вручную,
-                // воспользуйтесь инструментом Определение координат.
+        var myMap;
+        ymaps.ready(function () {
+            myMap = new ymaps.Map("YMapsID", {
                 center: [55.76, 37.64],
-                // Уровень масштабирования. Допустимые значения:
-                // от 0 (весь мир) до 19.
                 zoom: 9,
                 controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']
             });
@@ -45,11 +37,14 @@
                 console.log('request: ' + search.getRequestString());
             });
 
-            {% for i in parking_list %}
-                var parkingObj = new ymaps.Placemark([{{ i.longitude }}, {{ i.latitude }}])
+            {% for i in object_list %}
+                var parkingObj = new ymaps.Placemark([parseFloat("{{ i.latitude }}".replace(/,/g, '.')), parseFloat("{{ i.longitude }}".replace(/,/g, '.'))], {}, {
+                    preset: "islands#circleDotIcon",
+                    iconColor: '#ff0000'
+                })
                 myMap.geoObjects.add(parkingObj)
             {% endfor %}
-        }
+        });
     </script>
 
 
