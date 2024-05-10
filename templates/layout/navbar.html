@@ -19,9 +19,15 @@
             </ul>
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        {% block add_parking_tab %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'add_parking_area' %}"> Добавить
+                                парковку </a></li>
+                        {% endblock %}
+                    {% endif %}
                     {% block account_tab %}
+                        <li class="nav-item"><span class="nav-link">{{ user.username }}</span></li>
                         <li class="nav-item">
-                            <span class="navbar-text">{{ user.get_short_name }}</span>
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
                                 <button class="btn btn-link nav-link" type="submit">Выйти</button>

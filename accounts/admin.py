@@ -9,7 +9,7 @@ class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreateForm
     form = CustomUserEditForm
     model = CustomUser
-    list_display = ("username", "email", "first_name", "last_name")
+    list_display = ("username", "is_staff", "is_superuser", "first_name", "last_name")
 
 
 admin.site.register(CustomUser, CustomUserAdmin)

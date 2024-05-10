@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block head %}
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU"
+            type="text/javascript"></script>
+{% endblock %}
 {% load static %}
 
 {% block title %}
@@ -33,6 +38,17 @@
                 zoom: 9,
                 controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']
             });
+
+            var search = myMap.controls.get('searchControl');
+            search.events.add("resultselect", function (result) {
+                console.log(search.getResultsArray()[result.get('index')].geometry.getCoordinates())
+                console.log('request: ' + search.getRequestString());
+            });
+
+            {% for i in parking_list %}
+                var parkingObj = new ymaps.Placemark([{{ i.longitude }}, {{ i.latitude }}])
+                myMap.geoObjects.add(parkingObj)
+            {% endfor %}
         }
     </script>
 
