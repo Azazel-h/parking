@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% load crispy_forms_filters %}
-{% block title %}Log In{% endblock %}
+{% block title %}
+    Вход
+{% endblock %}
 
 {% block content %}
     <div class="container card card-body content">
-        <h2>Войти</h2>
+        <h2>Вход</h2>
         <form method="post">
             {% csrf_token %}
             {{ form | crispy }}

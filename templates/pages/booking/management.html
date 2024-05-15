@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block title %}
+    Менеджмент
+{% endblock %}
+
+{% block content %}
+
+    <div class="container card card-body content">
+        <h4>Список заявок на бронирование.</h4>
+        {% if booking_list %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Парковка</th>
+                    <th scope="col">Время создания</th>
+                    <th scope="col">Имя пользователя</th>
+                    <th scope="col">Подтверждение</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for record in booking_list %}
+                    <tr>
+                        <th scope="row"><a href="{{ record.get_absolute_url }}">{{ record.id }}</a></th>
+                        <td><a href="{{ record.parking.get_absolute_url }}">{{ record.parking.address }}</a></td>
+                        <td>{{ record.creation_time }}</td>
+                        <td>{{ record.user.username }}</td>
+                        <td>
+                            <form method="POST">
+                                <input type="submit" class="btn btn-success" value="Подтвердить">
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Нет доступных заявок.</p>
+        {% endif %}
+    </div>
+{% endblock %}

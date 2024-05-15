@@ -10,8 +10,8 @@ class ParkingArea(models.Model):
         on_delete=models.CASCADE,
         limit_choices_to={"is_staff": True},
     )
-    all_slots = models.PositiveIntegerField(default=0)
-    free_slots = models.PositiveIntegerField(default=0)
+    all_slots = models.PositiveIntegerField(default=1, null=False, blank=False)
+    free_slots = models.PositiveIntegerField(default=1)
     taken_slots = models.PositiveIntegerField(default=0)
     price = models.PositiveIntegerField(default=0)
     address = models.CharField(max_length=512)

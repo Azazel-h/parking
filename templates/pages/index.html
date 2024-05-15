@@ -21,8 +21,6 @@
     <div id="YMapsID" style="height: 100%; width: 100%;"></div>
 
     <script type="text/javascript">
-        // Функция ymaps.ready() будет вызвана, когда
-        // загрузятся все компоненты API, а также когда будет готово DOM-дерево.
         var myMap;
         ymaps.ready(function () {
             myMap = new ymaps.Map("YMapsID", {
@@ -38,7 +36,38 @@
             });
 
             {% for i in object_list %}
-                var parkingObj = new ymaps.Placemark([parseFloat("{{ i.latitude }}".replace(/,/g, '.')), parseFloat("{{ i.longitude }}".replace(/,/g, '.'))], {}, {
+                var parkingObj = new ymaps.Placemark([parseFloat("{{ i.latitude }}".replace(/,/g, '.')), parseFloat("{{ i.longitude }}".replace(/,/g, '.'))], {
+                    balloonContent:
+                        {% if user.is_authenticated %}
+                                '<div class="card">\n' +
+                                '<div class="card-body">\n' +
+                                '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'detail-parking-area' pk=i.id %}">{{ i.address }}</a></h6>\n' +
+                                '<h6 class="card-title"><span class="text-secondary">Свободных мест: {{ i.free_slots }}/{{ i.all_slots }}</h6>\n' +
+                                {% if i.free_slots <= 0 %}
+                                    '<h6 class="card-title"><span class="text-secondary">Недоступно</h6><br>\n' +
+                                {% endif %}
+                                {% if i.free_slots > 0 %}
+                                    '<form method="POST" action="{% url 'add-booking' pk=i.id %}">' +
+                                    '{% csrf_token %}' +
+                                    '<input type="submit" class="btn btn-primary mb-1 btn-sm btn-block" value="Забронировать место"><br>\n'
+                                    +
+                                    '</form>' +
+                                {% endif %}
+                                {% if user.is_superuser %}
+                                    '<a href="{% url 'delete-parking-area' pk=i.id %}" class="btn btn-warning mb-1 btn-sm btn-block">Удалить парковку</a>\n'
+                                    +
+                                {% endif %}
+                                '</div>\n' +
+                                '</div>'
+                        {% else %}
+                            '<div class="card">\n' +
+                                    '    <div class="card-body">\n' +
+                                '        <h6 class="card-title">Требуется войти в учетную запись!</h6>\n' +
+                                '        <a href="{% url 'login' %}" class="btn btn-sm btn-primary"> Войти </a>\n' +
+                                '    </div>\n' +
+                                '</div>'
+                        {% endif %}
+                }, {
                     preset: "islands#circleDotIcon",
                     iconColor: '#ff0000'
                 })

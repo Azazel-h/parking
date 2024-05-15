@@ -7,7 +7,7 @@
 {% load static %}
 {% load crispy_forms_filters %}
 {% block title %}
-    Информация о парковке
+    Удалить парковку
 {% endblock %}
 
 {% block content %}
@@ -18,10 +18,11 @@
         }
     </style>
     <div class="container card card-body content">
-        <h5>Номер парковки: {{ object.id }}</h5>
-        <p>Адрес: {{ object.address }}</p>
-        <p>Количество мест: {{ object.all_slots }}</p>
-        <p>Цена за час: {{ object.price }} руб.</p>
-        <p>Координаты: {{ object.latitude }}, {{ object.longitude }}</p>
+        <form method="POST">
+            {% csrf_token %}
+            <p>Вы уверены, что хотите удалить парковку - "{{ object.address }}"?</p>
+            {{ form | crispy }}
+            <input type="submit" class="btn btn-success" value="Подтвердить">
+        </form>
     </div>
 {% endblock %}

@@ -5,6 +5,7 @@ from parking_area.models import ParkingArea
 
 class ParkingAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "latitude",
         "longitude",
         "all_slots",

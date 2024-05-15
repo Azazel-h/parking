@@ -95,7 +95,41 @@ DATABASES = {
     }
 }
 
-
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+        "parking_area": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "booking": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+        "accounts": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+    },
+}
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 

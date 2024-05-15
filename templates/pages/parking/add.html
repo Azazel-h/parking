@@ -15,7 +15,7 @@
         <form method="POST" id="post-form">
             {% csrf_token %}
             {{ form | crispy }}
-            <button type="button" id="post-btn" class="btn btn-lg btn-success">Создать</button>
+            <button type="button" id="post-btn" class="btn btn-success">Создать</button>
         </form>
     </div>
 
@@ -43,11 +43,15 @@
                         url: "{% url "add-parking-area" %}",
                         data: _form,
                         success: function (response) {
-                            console.log(response)
-                            alert("Паркова успешно добавлена.");
+                            if (!response.success) {
+                                alert("Ошибка");
+                            } else {
+                                {#$(example_form).find('.success-message').show();#}
+                                alert("Паркова успешно добавлена.");
+                            }
                         },
                         error: function (response) {
-                            alert(response);
+                            alert("Ошибка");
                         }
                     })
                 },
