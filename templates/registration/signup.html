@@ -5,12 +5,15 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container card card-body content">
-        <h2>Регистрация</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form | crispy }}
-            <input type="submit" value="Зарегистрироваться" class="btn btn-success">
-        </form>
+    <div class="container pb-3 pt-3">
+        <div class="card card-body content">
+            <h2 class="card-title">Регистрация</h2>
+            <hr>
+            <form method="post">
+                {% csrf_token %}
+                {{ form | crispy }}
+                <input type="submit" value="Зарегистрироваться" class="btn btn-success">
+            </form>
+        </div>
     </div>
 {% endblock %}

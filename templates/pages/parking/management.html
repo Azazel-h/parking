@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load crispy_forms_filters %}
+{% block title %}
+    Управление парковкой
+{% endblock %}
+
+{% block content %}
+    <div class="container pt-3 pb-3">
+        <div class="card card-body content">
+            <h4 class="card-title">Управление парковкой</h4>
+            <hr>
+            {% if parking is not None %}
+                <h5>Номер парковки: <i>{{ parking.pk }}</i></h5>
+                <p>Адрес: <i>{{ parking.address }}</i></p>
+                <p>Количество мест: <i>{{ parking.all_slots }}</i></p>
+                <p>Количество свободных мест: <i>{{ parking.free_slots }}/{{ parking.all_slots }}</i></p>
+                <p>Цена за час: <i>{{ parking.price }} руб.</i></p>
+                <p>Координаты: <i>{{ parking.latitude }}, {{ parking.longitude }}</i></p>
+                <div class="row">
+                    <div class="col-auto pb-3">
+                        <a href="{% url 'update-parking-area' pk=parking.pk %}" class="btn btn-success d-inline-block"
+                           role="button">Обновить данные парковки</a>
+                    </div>
+                </div>
+                <div class="row">
+                {% if booking_list %}
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Время создания</th>
+                            <th scope="col">Время подтверждения</th>
+                            <th scope="col">Время окончания</th>
+                            <th scope="col">Имя</th>
+                            <th scope="col">Фамилия</th>
+                            <th scope="col">Логин</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record in booking_list %}
+                            {% if record.start_time != None %}
+                                <tr>
+                                <th scope="row"><a href="{{ record.get_absolute_url }}">{{ record.pk }}</a></th>
+                                <td>{{ record.creation_time }}</td>
+                                <td>{{ record.start_time }}</td>
+                                <td>{{ record.end_time }}</td>
+                                <td>{{ record.user.first_name }}</td>
+                                <td>{{ record.user.last_name }}</td>
+                                <td>{{ record.user.username }}</td>
+                                <td>
+                                    <form method="POST" action="{% url 'delete-booking' pk=record.pk %}">
+                                        {% csrf_token %}
+                                        <input type="submit" class="btn btn-danger" value="Удалить">
+                                    </form>
+                                </td>
+                                <td>
+                                    {% if record.end_time > now %}
+                                        <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
+                                            {% csrf_token %}
+                                            <input type="submit" class="btn btn-warning" value="Закончить">
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Все места сейчас свободны. Подтвердите, бронирование, чтобы оно отобразилось в данном
+                        разделе.</p>
+                {% endif %}
+            {% else %}
+                <p>Вы не привязаны ни к одной из парковок! Обратитесь к администратору.</p>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

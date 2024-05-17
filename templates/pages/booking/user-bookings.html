@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block title %}
+    Ваши бронирования
+{% endblock %}
+
+{% block content %}
+
+    <div class="container pb-3 pt-3">
+        <div class="card card-body content">
+            <h4 class="card-title">Список заявок на бронирование</h4>
+            <hr>
+            {% if booking_list %}
+                <div class="container">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Время создания</th>
+                            <th scope="col">Время подтверждения</th>
+                            <th scope="col">Время окончания</th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for record in booking_list %}
+                            <tr>
+                                <th scope="row"><a href="{{ record.get_absolute_url }}">{{ record.pk }}</a></th>
+                                <td>{{ record.creation_time }}</td>
+                                <td>
+                                    {% if record.start_time is not None %}
+                                        {{ record.start_time }}
+                                    {% else %}
+                                        На подтверждении
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.end_time is not None %}
+                                        {{ record.end_time }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.end_time is not None and record.end_time > now %}
+                                        <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
+                                            {% csrf_token %}
+                                            <input type="submit" class="btn btn-warning" value="Закончить">
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'delete-booking' pk=record.pk %}">
+                                            {% csrf_token %}
+                                            <input type="submit" class="btn btn-danger" value="Удалить">
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>Вы пока не создали ни одного бронирования.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -5,10 +5,10 @@ from core import settings
 
 
 class ParkingArea(models.Model):
-    manager = models.ForeignKey(
+    manager = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        limit_choices_to={"is_staff": True},
+        limit_choices_to={"is_staff": True, "is_superuser": False},
     )
     all_slots = models.PositiveIntegerField(default=1, null=False, blank=False)
     free_slots = models.PositiveIntegerField(default=1)

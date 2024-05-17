@@ -1,8 +1,4 @@
 {% extends "base.html" %}
-{% block head %}
-    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU"
-            type="text/javascript"></script>
-{% endblock %}
 
 {% load static %}
 {% load crispy_forms_filters %}
@@ -11,17 +7,24 @@
 {% endblock %}
 
 {% block content %}
-    <style>
-        body, html {
-            width: 100%;
-            height: 85%;
-        }
-    </style>
-    <div class="container card card-body content">
-        <h5>Номер парковки: {{ object.id }}</h5>
-        <p>Адрес: {{ object.address }}</p>
-        <p>Количество мест: {{ object.all_slots }}</p>
-        <p>Цена за час: {{ object.price }} руб.</p>
-        <p>Координаты: {{ object.latitude }}, {{ object.longitude }}</p>
+    <div class="container pb-3 pt-3">
+        <div class="card card-body content">
+            <h4 class="card-title">Информация о парковке</h4>
+            <hr>
+            <h5>Номер парковки: <i>{{ object.pk }}</i></h5>
+            <p>Адрес: <i>{{ object.address }}</i></p>
+            <p>Количество мест: <i>{{ object.all_slots }}</i></p>
+            <p>Цена за час: <i>{{ object.price }} руб.</i></p>
+            <p>Координаты: <i>{{ object.latitude }}, {{ object.longitude }}</i></p>
+            {% if user.is_superuser or user.is_staff %}
+                <div class="row">
+                    <div class="col-auto">
+                        <a href="{% url 'update-parking-area' pk=object.pk %}" class="btn btn-success d-inline-block"
+                           role="button">Обновить данные парковки</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
+
 {% endblock %}

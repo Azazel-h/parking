@@ -1,7 +1,8 @@
+import uuid
+
 from django.contrib.auth.models import (
     AbstractUser,
     Group,
-    BaseUserManager,
     PermissionsMixin,
 )
 from django.db import models
@@ -10,17 +11,8 @@ from booking.models import ParkingArea
 
 
 class CustomUser(AbstractUser):
-    pass
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    telegram_id = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.username
-
-
-class Car(models.Model):
-    owner = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, blank=False, null=False
-    )
-    current_parking = models.ForeignKey(
-        ParkingArea, on_delete=models.CASCADE, blank=True, null=True
-    )
-    car_number = models.CharField(max_length=20)

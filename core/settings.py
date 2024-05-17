@@ -43,7 +43,20 @@ INSTALLED_APPS = [
     "parking_area.apps.ParkingAreaConfig",
     "crispy_forms",
     "crispy_bootstrap5",
+    "django_q",
 ]
+
+Q_CLUSTER = {
+    "name": "DjangoQ",
+    "workers": 4,
+    "recycle": 500,
+    "timeout": 60,
+    "django_redis": "default",
+    "retry": 60,
+    "queue_limit": 50,
+    "bulk": 10,
+    "orm": "default",
+}
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
