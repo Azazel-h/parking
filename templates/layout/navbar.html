@@ -45,8 +45,12 @@
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
                     {% block account_tab %}
-                        <li class="nav-item"><span class="nav-link">{{ user.last_name }} {{ user.first_name }}</span>
+                        <li class="nav-item"><a href="{% url 'user-update' %}"
+                                                class="nav-link">{{ user.last_name }} {{ user.first_name }}</a>
                         </li>
+                        {% if not user.is_superuser and not user.is_staff %}
+                            <li class="nav-item"><span class="nav-link">{{ user.balance }} руб.</span>
+                        {% endif %}
                         <li class="nav-item">
                             <form method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}

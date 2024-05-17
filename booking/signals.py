@@ -5,7 +5,7 @@ from booking.models import Booking
 
 @receiver(post_delete, sender=Booking)
 def delete_related_schedules(sender, instance, **kwargs):
-    if instance.end_schedule:
-        instance.end_schedule.delete()
-    if instance.notify_schedule:
-        instance.notify_schedule.delete()
+    if instance.end_bookings:
+        instance.end_bookings.delete()
+    if instance.notify_booking:
+        instance.notify_booking.delete()

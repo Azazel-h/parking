@@ -110,19 +110,9 @@ class EndBookingView(LoginRequiredMixin, View):
     model = Booking
 
     def post(self, request, *args, **kwargs):
-        # booking.end_time = timezone.now()
-        # booking.save()
-        # logger.debug(booking)
         end_booking(self.kwargs["pk"])
         Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
         Booking.objects.get(pk=self.kwargs["pk"]).end_schedule.delete()
-
-        # schedule(
-        #     "booking.tasks.notify_user",
-        #     booking.id,
-        #     schedule_type="O",
-        #     next_run=booking.end_time - timezone.timedelta(minutes=5),
-        # )
 
         if request.user.is_staff:
             return redirect("parking-management")
