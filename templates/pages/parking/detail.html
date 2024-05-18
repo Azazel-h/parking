@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load crispy_forms_filters %}
+{% block title %}
+    Информация о парковке
+{% endblock %}
+
+{% block content %}
+    <div class="container pb-3 pt-3">
+        <div class="card card-body content">
+            <h4 class="card-title">Информация о парковке</h4>
+            <hr>
+            <h5>Номер парковки: <i>{{ object.pk }}</i></h5>
+            <p>Адрес: <i>{{ object.address }}</i></p>
+            <p>Количество мест: <i>{{ object.all_slots }}</i></p>
+            <p>Цена за час: <i>{{ object.price }} руб.</i></p>
+            <p>Координаты: <i>{{ object.latitude }}, {{ object.longitude }}</i></p>
+            {% if user.is_superuser or user.is_staff %}
+                <div class="row">
+                    <div class="col-auto">
+                        <a href="{% url 'update-parking-area' pk=object.pk %}" class="btn btn-success d-inline-block"
+                           role="button">Обновить данные парковки</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
