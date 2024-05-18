@@ -1,7 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.forms import ModelForm, TextInput
-
-from core import settings
 from parking_area.models import ParkingArea
 
 

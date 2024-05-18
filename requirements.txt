@@ -2,3 +2,7 @@ Django~=5.0.6
 secret-key-generator==0.0.8
 django-crispy-forms==2.1
 crispy-bootstrap5==2024.2
+aiogram==3.6.0
+django-q2==1.6.2
+redis==5.0.4
+python-dotenv==1.0.1

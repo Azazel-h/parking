@@ -8,9 +8,9 @@ logger = logging.getLogger("booking.views")
 TOKEN = "6952995842:AAEyiJb8WF0oSwpQPPxMAQbRXElDwfGiin0"
 
 
-def notify_user(booking_id):
+def notify_user(booking_id: int) -> None:
     try:
-        booking = Booking.objects.get(pk=booking_id)
+        booking: Booking = Booking.objects.get(pk=booking_id)
         user = booking.user
         if user.telegram_id:
             logger.debug("Sending notification")
@@ -18,7 +18,8 @@ def notify_user(booking_id):
             text = (
                 f"<b>Напоминание о завершении бронирования</b>\n"
                 f"Уважаемый {user.last_name} {user.first_name}, ваше бронирование заканчивается через 5 минут.\n"
-                f'<a href="http://localhost:8000/parking/management/">Вы можете перейти по ссылке и продлить его</a>'
+                f"Вы можете перейти по ссылке и продлить его!\n\n"
+                '<a href="http://127.0.0.1:8000/booking/history/">Ссылка</a>'
             )
             encoded_text = quote(text)
             url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=HTML&text={encoded_text}"
@@ -28,10 +29,10 @@ def notify_user(booking_id):
         logger.warning(ex)
 
 
-def end_booking(booking_id):
+def end_booking(booking_id: int) -> None:
     try:
         logger.debug("Ending booking")
-        booking = Booking.objects.get(pk=booking_id)
+        booking: Booking = Booking.objects.get(pk=booking_id)
 
         booking.parking.free_slots += 1
         booking.parking.save()

@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import sys
-
 from notifications.notify_bot import main
 
 if __name__ == "__main__":

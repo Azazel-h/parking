@@ -18,10 +18,10 @@ class CustomUser(AbstractUser):
     telegram_tag = models.CharField(max_length=256, blank=True, null=True)
     telegram_id = models.CharField(max_length=256, blank=True, null=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.username
 
-    def update(self, commit=False, **kwargs):
+    def update(self, commit=False, **kwargs) -> None:
         for key, value in kwargs.items():
             if value:
                 setattr(self, key, value)

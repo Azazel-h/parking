@@ -1,18 +1,18 @@
+from typing import Any, List, Dict
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
+from django.db.models import QuerySet
+from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.views import View
-from django.views.generic import ListView, DeleteView
+from django.views.generic import ListView
 
 from booking.models import Booking
 from booking.tasks import end_booking
 
 from parking_area.models import ParkingArea
-from http import HTTPStatus
-from django_q.tasks import async_task, schedule
-from django_q.models import Schedule
+from django_q.tasks import schedule
 
 import logging
 
@@ -22,7 +22,9 @@ logger = logging.getLogger("parking_area.views")
 class AddBookingView(LoginRequiredMixin, View):
     model = Booking
 
-    def post(self, request, *args, **kwargs):
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseRedirect:
         parking = ParkingArea.objects.get(pk=kwargs["pk"])
         if (
             parking.free_slots >= 1
@@ -49,8 +51,8 @@ class ManagementView(LoginRequiredMixin, ListView):
     template_name = "pages/booking/management.html"
     context_object_name = "booking_list"
 
-    def get_queryset(self, *args, **kwargs):
-        parkings = ParkingArea.objects.filter(manager=self.request.user)
+    def get_queryset(self, *args: Any, **kwargs: Any) -> List[Booking]:
+        parkings: QuerySet = ParkingArea.objects.filter(manager=self.request.user)
         booking_records = []
         for parking in parkings:
             for i in Booking.objects.filter(
@@ -66,13 +68,13 @@ class UserBookingView(LoginRequiredMixin, ListView):
     template_name = "pages/booking/user-bookings.html"
     context_object_name = "booking_list"
 
-    def get_queryset(self, *args, **kwargs):
-        booking_records = Booking.objects.filter(user=self.request.user).order_by(
-            "-creation_time"
-        )
+    def get_queryset(self, *args: Any, **kwargs: Any) -> List[Booking]:
+        booking_records: QuerySet = Booking.objects.filter(
+            user=self.request.user
+        ).order_by("-creation_time")
         return booking_records
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["now"] = timezone.now()
         return context
@@ -81,8 +83,10 @@ class UserBookingView(LoginRequiredMixin, ListView):
 class StartBookingView(LoginRequiredMixin, View):
     model = Booking
 
-    def post(self, request, *args, **kwargs):
-        booking = Booking.objects.get(pk=self.kwargs["pk"])
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseRedirect:
+        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.start_time = timezone.now()
         booking.end_time = timezone.now() + timezone.timedelta(
             minutes=6
@@ -113,8 +117,10 @@ class StartBookingView(LoginRequiredMixin, View):
 class EndBookingView(LoginRequiredMixin, View):
     model = Booking
 
-    def post(self, request, *args, **kwargs):
-        booking = Booking.objects.get(pk=self.kwargs["pk"])
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseRedirect:
+        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.end_time = timezone.now()
         booking.save()
 
@@ -135,8 +141,8 @@ class EndBookingView(LoginRequiredMixin, View):
 class ProlongBookingView(LoginRequiredMixin, View):
     model = Booking
 
-    def post(self, request, *args, **kwargs):
-        booking = Booking.objects.get(pk=self.kwargs["pk"])
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.save()
 
         try:
@@ -151,7 +157,7 @@ class ProlongBookingView(LoginRequiredMixin, View):
             "booking.tasks.notify_user",
             booking.id,
             schedule_type="O",
-            next_run=new_end_time + timezone.timedelta(minutes=5),
+            next_run=new_end_time - timezone.timedelta(minutes=5),
         )
 
         booking.end_schedule = schedule(
@@ -171,8 +177,8 @@ class ProlongBookingView(LoginRequiredMixin, View):
 class DeleteBookingView(LoginRequiredMixin, View):
     model = Booking
 
-    def post(self, request, *args, **kwargs):
-        booking = Booking.objects.get(pk=self.kwargs["pk"])
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.delete()
         if request.user.is_staff:
             return redirect("parking-management")

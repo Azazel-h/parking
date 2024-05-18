@@ -1,6 +1,5 @@
 from django.db import models
 from django.urls import reverse
-
 from core import settings
 
 
@@ -19,5 +18,5 @@ class ParkingArea(models.Model):
     latitude = models.FloatField(default=0, null=False, blank=False)
     longitude = models.FloatField(default=0, null=False, blank=False)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("detail-parking-area", kwargs={"pk": self.pk})
