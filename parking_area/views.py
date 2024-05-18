@@ -76,7 +76,7 @@ class ManagementParkingAreaView(LoginRequiredMixin, View):
             context["parking"] = parking
             context["booking_list"] = Booking.objects.filter(
                 parking=parking, start_time__isnull=False
-            ).order_by("start_time")
+            ).order_by("-start_time")
         except ParkingArea.DoesNotExist:
             logger.error("No managed parking")
 

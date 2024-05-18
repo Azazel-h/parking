@@ -1,12 +1,8 @@
 import decimal
-
-from django_q.tasks import async_task
-from django.utils import timezone
 from .models import Booking
-from notifications.notify_bot import bot as n_bot
-from django_q.tasks import async_task
 import requests
 import logging
+from urllib.parse import quote
 
 logger = logging.getLogger("booking.views")
 TOKEN = "6952995842:AAEyiJb8WF0oSwpQPPxMAQbRXElDwfGiin0"
@@ -20,11 +16,13 @@ def notify_user(booking_id):
             logger.debug("Sending notification")
             chat_id = user.telegram_id
             text = (
-                f"Напоминание о завершении бронирования\n"
-                f"Уважаемый {user.username}, ваше бронирование заканчивается через 5 минут."
+                f"<b>Напоминание о завершении бронирования</b>\n"
+                f"Уважаемый {user.last_name} {user.first_name}, ваше бронирование заканчивается через 5 минут.\n"
+                f'<a href="http://localhost:8000/parking/management/">Вы можете перейти по ссылке и продлить его</a>'
             )
-
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={text}"
+            encoded_text = quote(text)
+            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=HTML&text={encoded_text}"
+            logger.debug(url)
             logger.debug(requests.get(url).json())
     except Exception as ex:
         logger.warning(ex)

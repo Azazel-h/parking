@@ -55,7 +55,7 @@ class ManagementView(LoginRequiredMixin, ListView):
         for parking in parkings:
             for i in Booking.objects.filter(
                 parking=parking, start_time__isnull=True
-            ).order_by("start_time"):
+            ).order_by("-start_time"):
                 booking_records.append(i)
         logger.debug(booking_records)
         return booking_records
@@ -68,7 +68,7 @@ class UserBookingView(LoginRequiredMixin, ListView):
 
     def get_queryset(self, *args, **kwargs):
         booking_records = Booking.objects.filter(user=self.request.user).order_by(
-            "creation_time"
+            "-creation_time"
         )
         return booking_records
 
