@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=89f0a1ad-a907-4cba-8bb7-010c7adea78a&suggest_apikey=a4ae1a75-bf48-4aab-b62a-c018b1469c42&lang=ru_RU&coordorder=latlong"
+            type="text/javascript"></script>
+{% endblock %}
+{% load static %}
+
+{% block title %}
+    Главная
+{% endblock %}
+
+{% block content %}
+
+    <style>
+        body, html {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <div id="YMapsID" style="height: 100%; width: 100%;"></div>
+
+    <script type="text/javascript">
+        var myMap;
+        ymaps.ready(function () {
+            myMap = new ymaps.Map("YMapsID", {
+                center: [55.76, 37.64],
+                zoom: 9,
+                controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']
+            });
+
+            var search = myMap.controls.get('searchControl');
+            search.events.add("resultselect", function (result) {
+                console.log(search.getResultsArray()[result.get('index')].geometry.getCoordinates())
+                console.log('request: ' + search.getRequestString());
+            });
+
+            {% for i in object_list %}
+                var parkingObj = new ymaps.Placemark([parseFloat("{{ i.latitude }}".replace(/,/g, '.')), parseFloat("{{ i.longitude }}".replace(/,/g, '.'))], {
+                    balloonContent:
+                        {% if user.is_authenticated %}
+                                '<div class="card">\n' +
+                                '<div class="card-body">\n' +
+                                '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'detail-parking-area' pk=i.id %}">{{ i.address }}</a></h6>\n' +
+                                '<h6 class="card-title"><span class="text-secondary">Свободных мест: {{ i.free_slots }}/{{ i.all_slots }}</h6>\n' +
+                                '<h6 class="card-title"><span class="text-secondary">Тариф: {{ i.price }} руб./ч</h6>\n' +
+                                {% if i.free_slots <= 0 or has_booking %}
+                                    '<h6 class="card-title"><span class="text-secondary">Недоступно</h6><br>\n' +
+                                {% elif not user.is_superuser and not user.is_staff %}
+                                    '<form method="POST" action="{% url 'add-booking' pk=i.id %}">' +
+                                    '{% csrf_token %}' +
+                                    '<input type="submit" class="btn btn-primary mb-1 btn-sm btn-block" value="Забронировать место"><br>\n'
+                                    +
+                                    '</form>' +
+                                {% endif %}
+                                {% if user.is_superuser and user.is_staff %}
+                                    '<a href="{% url 'delete-parking-area' pk=i.id %}" class="btn btn-warning mb-1 btn-sm btn-block">Удалить парковку</a>\n'
+                                    +
+                                {% endif %}
+                                {% if not user.is_superuser and user.is_staff and i.manager == user %}
+                                    '<a href="{% url 'update-parking-area' pk=i.id %}" class="btn btn-warning mb-1 btn-sm btn-block">Обновить данные парковки</a>\n'
+                                    +
+                                {% endif %}
+                                '</div>\n' +
+                                '</div>'
+                        {% else %}
+                            '<div class="card">\n' +
+                                    '    <div class="card-body">\n' +
+                                '        <h6 class="card-title">Требуется войти в учетную запись!</h6>\n' +
+                                '        <a href="{% url 'login' %}" class="btn btn-sm btn-primary"> Войти </a>\n' +
+                                '    </div>\n' +
+                                '</div>'
+                        {% endif %}
+                }, {
+                    preset: "islands#circleDotIcon",
+                    iconColor: '#ff0000'
+                })
+                myMap.geoObjects.add(parkingObj)
+            {% endfor %}
+        });
+    </script>
+
+
+    {#    <script>#}
+    {#        var myMap;#}
+    {#        ymaps.ready(function () {#}
+    {#            myMap = new ymaps.Map("YMapsID", {#}
+    {#                center: [55.76, 37.64],#}
+    {#                zoom: 9,#}
+    {#                controls: ['searchControl', 'routeButtonControl', 'geolocationControl', 'fullscreenControl', 'zoomControl']#}
+    {#            });#}
+    {##}
+    {#            var search = myMap.controls.get('searchControl');#}
+    {#            search.events.add("resultselect", function (result) {#}
+    {#                console.log(search.getResultsArray()[result.get('index')].geometry.getCoordinates())#}
+    {#                console.log('request: ' + search.getRequestString());#}
+    {#            });#}
+    {##}
+    {#            {% for i in sharings %}#}
+    {#                var myGeoObject = new ymaps.Placemark([{{ i.crds_lot }}, {{ i.crds_lat }}],#}
+    {#                    {#}
+    {#                        balloonContent:#}
+    {#                            {% if user.is_authenticated %}#}
+    {#                                    '<div class="card">\n' +#}
+    {#                                    '    <div class="card-body">\n' +#}
+    {#                                    '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'share_page' key=i.id %}"> {{ i.address }} </a></h6>\n' +#}
+    {#                                    {% if i.free_pbs <= 0 or session_notification %}#}
+    {#                                        '    <h4 class="card-title"><span class="text-secondary"> Недоступно </h4>\n' +#}
+    {#                                    {% endif %}#}
+    {#                                    {% if i.free_pbs > 0 and not session_notification %}#}
+    {#                                        '        <a href="{% url 'ordering' key=i.id %}" class="btn btn-primary mb-1 btn-lg btn-block"> Получить Powerbank </a>\n'#}
+    {#                                        +#}
+    {#                                    {% endif %}#}
+    {#                                    {% if user.is_superuser %}#}
+    {#                                        '        <a href="#" class="btn btn-warning mb-1 btn-sm btn-block"> Изменить точку </a>\n'#}
+    {#                                        +#}
+    {#                                    {% endif %}#}
+    {#                                    '</div>\n' +#}
+    {#                                    '</div>'#}
+    {#                            {% else %}#}
+    {#                                '<div class="card">\n' +#}
+    {#                                        '    <div class="card-body">\n' +#}
+    {#                                    '        <h4 class="card-title"> Вам нужно сначала войти на сайт! </h4>\n' +#}
+    {#                                    '        <a href="{% url 'login' %}" class="btn btn-primary"> Войти </a>\n' +#}
+    {#                                    '    </div>\n' +#}
+    {#                                    '</div>'#}
+    {#                            {% endif %}#}
+    {#                    }, {#}
+    {#                        iconLayout: 'default#image',#}
+    {#                        {% load static %}#}
+    {#                        {% if i.free_pbs > 0 and not session_notification %}#}
+    {#                            iconImageHref: '<i class="bi-alarm"></i>#}
+    {#                        {% else %}#}
+    {#                            iconImageHref: '<i class="bi-alarm"></i>'#}
+    {#                        {% endif %}#}
+    {#                    });#}
+    {#                myMap.geoObjects.add(myGeoObject);#}
+    {#            {% endfor %}#}
+    {#        });#}
+    {#    </script>#}
+
+{% endblock %}
