@@ -27,7 +27,11 @@ Q_CLUSTER = {
     "workers": 4,
     "recycle": 500,
     "timeout": 60,
-    "django_redis": "default",
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "db": 0,
+    },
     "retry": 60,
     "queue_limit": 50,
     "bulk": 10,

@@ -1,13 +1,50 @@
 version: '3.9'
 
 services:
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    container_name: django-debug
     volumes:
       - .:/app
+    ports:
+      - "${DJANGO_PORT}:${DJANGO_PORT}"
     environment:
-      - DJANGO_SETTINGS_MODULE=core.settings
+      - DJANGO_PORT
+    command: >
+      sh -c "pip3 install -r /app/requirements.txt &&
+             python3 /app/manage.py makemigrations &&
+             python3 /app/manage.py migrate &&
+             python3 /app/manage.py runserver 0.0.0.0:${DJANGO_PORT}"
+    depends_on:
+      - queue
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django-queue
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python3 /app/manage.py qcluster"
+    depends_on:
+      - redis
+
+  notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django-notifications-bot
+    volumes:
+      - .:/app
+    command: >
+      sh -c "python3 -m notifications"
+    depends_on:
+      - web
