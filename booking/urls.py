@@ -13,5 +13,5 @@ urlpatterns = [
     path("<int:pk>/start/", views.StartBookingView.as_view(), name="start-booking"),
     path("<int:pk>/end/", views.EndBookingView.as_view(), name="end-booking"),
     path("<int:pk>/delete/", views.DeleteBookingView.as_view(), name="delete-booking"),
-    # path("<int:pk>/prolong/", views.AddBookingView.as_view()),
+    path("<int:pk>/prolong/", views.ProlongBookingView.as_view(), name="prolong-booking"),
 ]

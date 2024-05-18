@@ -15,6 +15,7 @@ class CustomUser(AbstractUser):
     balance = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=False
     )
+    telegram_tag = models.CharField(max_length=256, blank=True, null=True)
     telegram_id = models.CharField(max_length=256, blank=True, null=True)
 
     def __str__(self):

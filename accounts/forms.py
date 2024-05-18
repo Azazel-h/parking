@@ -23,11 +23,11 @@ class CustomUserEditForm(UserChangeForm):
 class BalanceUpdateForm(ModelForm):
     class Meta:
         model = CustomUser
-        fields = ("first_name", "last_name", "email", "telegram_id", "balance")
+        fields = ("first_name", "last_name", "email", "telegram_tag", "balance")
         labels = {
             "balance": "Баланс",
             "first_name": "Имя",
             "last_name": "Фамилия",
             "email": "Адрес электронной почты",
-            "telegram_id": "Ваш тег в TG или ID",
+            "telegram_tag": "Ваш тег в TG или ID",
         }

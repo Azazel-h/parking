@@ -38,7 +38,6 @@ class AddBookingView(LoginRequiredMixin, View):
                 "end_time": None,
             }
             Booking(**new_booking_data).save()
-            parking.free_slots -= 1
             parking.save()
             logger.debug("Adding new booking")
 
@@ -85,9 +84,14 @@ class StartBookingView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.start_time = timezone.now()
-        booking.end_time = timezone.now() + timezone.timedelta(minutes=6)
+        booking.end_time = timezone.now() + timezone.timedelta(
+            minutes=6
+        )  # Время бронирования
+
+        booking.parking.free_slots -= 1
+        booking.parking.save()
+
         booking.save()
-        logger.debug(booking)
 
         booking.notify_schedule = schedule(
             "booking.tasks.notify_user",
@@ -110,9 +114,53 @@ class EndBookingView(LoginRequiredMixin, View):
     model = Booking
 
     def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=self.kwargs["pk"])
+        booking.end_time = timezone.now()
+        booking.save()
+
         end_booking(self.kwargs["pk"])
-        Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
-        Booking.objects.get(pk=self.kwargs["pk"]).end_schedule.delete()
+
+        try:
+            Booking.objects.get(pk=self.kwargs["pk"]).end_schedule.delete()
+            Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
+        except Exception as ex:
+            logger.error(ex)
+
+        if request.user.is_staff:
+            return redirect("parking-management")
+        else:
+            return redirect("booking-user")
+
+
+class ProlongBookingView(LoginRequiredMixin, View):
+    model = Booking
+
+    def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=self.kwargs["pk"])
+        booking.save()
+
+        try:
+            Booking.objects.get(pk=self.kwargs["pk"]).end_schedule.delete()
+            Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
+        except Exception as ex:
+            logger.error(ex)
+        new_end_time = booking.end_time + timezone.timedelta(minutes=6)
+        booking.end_time = new_end_time  # Время продления бронирования
+
+        booking.notify_schedule = schedule(
+            "booking.tasks.notify_user",
+            booking.id,
+            schedule_type="O",
+            next_run=new_end_time + timezone.timedelta(minutes=5),
+        )
+
+        booking.end_schedule = schedule(
+            "booking.tasks.end_booking",
+            booking.id,
+            schedule_type="O",
+            next_run=new_end_time,
+        )
+        booking.save()
 
         if request.user.is_staff:
             return redirect("parking-management")
@@ -125,10 +173,6 @@ class DeleteBookingView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=self.kwargs["pk"])
-        parking = booking.parking
-        parking.free_slots += 1
-
-        parking.save()
         booking.delete()
         if request.user.is_staff:
             return redirect("parking-management")

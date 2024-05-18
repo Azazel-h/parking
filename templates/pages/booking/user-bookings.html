@@ -20,6 +20,7 @@
                             <th scope="col">Время подтверждения</th>
                             <th scope="col">Время окончания</th>
                             <th scope="col"></th>
+                            <th scope="col"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -41,19 +42,27 @@
                                         -
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if record.end_time is not None and record.end_time > now %}
+                                {% if record.end_time is not None and record.end_time > now %}
+                                    <td>
                                         <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
                                             {% csrf_token %}
                                             <input type="submit" class="btn btn-warning" value="Закончить">
                                         </form>
-                                    {% else %}
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{% url 'prolong-booking' pk=record.pk %}">
+                                            {% csrf_token %}
+                                            <input type="submit" class="btn btn-primary" value="Продлить">
+                                        </form>
+                                    </td>
+                                {% else %}
+                                    <td>
                                         <form method="POST" action="{% url 'delete-booking' pk=record.pk %}">
                                             {% csrf_token %}
                                             <input type="submit" class="btn btn-danger" value="Удалить">
                                         </form>
-                                    {% endif %}
-                                </td>
+                                    </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                         </tbody>

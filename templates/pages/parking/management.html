@@ -37,7 +37,6 @@
                             <th scope="col">Фамилия</th>
                             <th scope="col">Логин</th>
                             <th scope="col"></th>
-                            <th scope="col"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -52,16 +51,15 @@
                                 <td>{{ record.user.last_name }}</td>
                                 <td>{{ record.user.username }}</td>
                                 <td>
-                                    <form method="POST" action="{% url 'delete-booking' pk=record.pk %}">
-                                        {% csrf_token %}
-                                        <input type="submit" class="btn btn-danger" value="Удалить">
-                                    </form>
-                                </td>
-                                <td>
                                     {% if record.end_time > now %}
                                         <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
                                             {% csrf_token %}
                                             <input type="submit" class="btn btn-warning" value="Закончить">
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'delete-booking' pk=record.pk %}">
+                                            {% csrf_token %}
+                                            <input type="submit" class="btn btn-danger" value="Удалить">
                                         </form>
                                     {% endif %}
                                 </td>
