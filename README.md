@@ -26,26 +26,26 @@ docker compose up
 Каждый из них (за исключением связующего ядра) включает в себя модели и классовые View обработчики, которые доступны по
 определенным путям (Routes, Urls).
 
-Список путей за (исключением неиспользуемых/библиотечных):
+Список путей (за исключением неиспользуемых/библиотечных):
 
 ```
 - /
 - admin/
     - ...
 - booking/
-    - add/<<int:pk>>
+    - add/<int:pk>
     - management/
     - history/
-    - <<int:pk>>/start/
-    - <<int:pk>>/end/
-    - <<int:pk>>/delete/
-    - <<int:pk>>/prolong/
+    - <int:pk>/start/
+    - <int:pk>/end/
+    - <int:pk>/delete/
+    - <int:pk>/prolong/
 - parking/
     - add/
     - management/
-    - <<int:pk>>/detail/
-    - <<int:pk>>/delete/
-    - <<int:pk>>/update/
+    - <int:pk>/detail/
+    - <int:pk>/delete/
+    - <int:pk>/update/
 - accounts/
     - signup/
     - update/

@@ -8,8 +8,10 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, View
 from dotenv import load_dotenv
 
-import notifications.notify_bot
 from accounts.forms import CustomUserCreateForm, BalanceUpdateForm
+import logging
+
+logger = logging.getLogger("parking_area.views")
 
 
 class SignUpView(CreateView):
@@ -23,7 +25,9 @@ class UserUpdateView(LoginRequiredMixin, View):
     success_url = reverse_lazy("index")
     template_name = "pages/users/update.html"
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseRedirect:
+    def post(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponseRedirect:
         form = BalanceUpdateForm(request.POST)
         if form.is_valid():
             request.user.update(**form.cleaned_data)
@@ -34,4 +38,4 @@ class UserUpdateView(LoginRequiredMixin, View):
         context = {"form": self.form_class}
         load_dotenv()
         context["bot_tag"] = os.getenv("BOT_TAG")
-        return render(request, self.template_name, context={"form": self.form_class})
+        return render(request, self.template_name, context=context)
