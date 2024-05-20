@@ -20,8 +20,19 @@ TOKEN = os.getenv("BOT_TOKEN")
 dp = Dispatcher()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
+
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
+    """
+    Обработчик команды /start.
+
+    Args:
+        message (Message):
+            Объект сообщения.
+
+    Returns:
+        None
+    """
     await message.answer(
         f"Привет, {html.bold(message.from_user.full_name)}! Теперь тут будут приходить уведомления."
     )

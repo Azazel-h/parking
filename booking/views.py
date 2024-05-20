@@ -20,11 +20,34 @@ logger = logging.getLogger("parking_area.views")
 
 
 class AddBookingView(LoginRequiredMixin, View):
+    """
+    Представление для добавления бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
     model = Booking
 
     def post(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseRedirect:
+        """
+        Обработка POST-запросов для добавления бронирования.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponseRedirect:
+                Перенаправляет на главную страницу.
+        """
         parking = ParkingArea.objects.get(pk=kwargs["pk"])
         if (
             parking.free_slots >= 1
@@ -47,11 +70,36 @@ class AddBookingView(LoginRequiredMixin, View):
 
 
 class ManagementView(LoginRequiredMixin, ListView):
+    """
+    Представление для управления бронированиями.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+        template_name (str):
+            Имя шаблона для отображения страницы управления бронированиями.
+        context_object_name (str):
+            Имя объекта контекста для передачи в шаблон.
+    """
+
     model = Booking
     template_name = "pages/booking/management.html"
     context_object_name = "booking_list"
 
     def get_queryset(self, *args: Any, **kwargs: Any) -> List[Booking]:
+        """
+        Получение списка бронирований.
+
+        Аргументы:
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            List[Booking]:
+                Список объектов бронирований.
+        """
         parkings: QuerySet = ParkingArea.objects.filter(manager=self.request.user)
         booking_records = []
         for parking in parkings:
@@ -64,28 +112,87 @@ class ManagementView(LoginRequiredMixin, ListView):
 
 
 class UserBookingView(LoginRequiredMixin, ListView):
+    """
+    Представление для отображения бронирований пользователя.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+        template_name (str):
+            Имя шаблона для отображения страницы с бронированиями пользователя.
+        context_object_name (str):
+            Имя объекта контекста для передачи в шаблон.
+    """
+
     model = Booking
     template_name = "pages/booking/user-bookings.html"
     context_object_name = "booking_list"
 
     def get_queryset(self, *args: Any, **kwargs: Any) -> List[Booking]:
+        """
+        Получение списка бронирований пользователя.
+
+        Аргументы:
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            List[Booking]:
+                Список объектов бронирований пользователя.
+        """
         booking_records: QuerySet = Booking.objects.filter(
             user=self.request.user
         ).order_by("-creation_time")
         return booking_records
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Получение дополнительных данных контекста.
+
+        Аргументы:
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            Dict[str, Any]:
+                Словарь с дополнительными данными контекста.
+        """
         context = super().get_context_data(**kwargs)
         context["now"] = timezone.now()
         return context
 
 
 class StartBookingView(LoginRequiredMixin, View):
+    """
+    Представление для начала бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
     model = Booking
 
     def post(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseRedirect:
+        """
+        Обработка POST-запросов для начала бронирования.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponseRedirect:
+                Перенаправляет на страницу управления бронированиями.
+        """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.start_time = timezone.now()
         booking.end_time = timezone.now() + timezone.timedelta(
@@ -115,11 +222,34 @@ class StartBookingView(LoginRequiredMixin, View):
 
 
 class EndBookingView(LoginRequiredMixin, View):
+    """
+    Представление для завершения бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
     model = Booking
 
     def post(
         self, request: HttpRequest, *args: Any, **kwargs: Any
     ) -> HttpResponseRedirect:
+        """
+                Обработка POST-запросов для завершения бронирования.
+
+                Аргументы:
+                    request (HttpRequest):
+                        Объект HTTP-запроса.
+                        *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponseRedirect:
+                Перенаправляет на страницу управления бронированиями.
+        """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.end_time = timezone.now()
         booking.save()
@@ -139,9 +269,32 @@ class EndBookingView(LoginRequiredMixin, View):
 
 
 class ProlongBookingView(LoginRequiredMixin, View):
+    """
+    Представление для продления бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
     model = Booking
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """
+        Обработка POST-запросов для продления бронирования.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponse:
+                Перенаправляет на страницу управления бронированиями или страницу бронирований пользователя.
+        """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.save()
 
@@ -175,9 +328,32 @@ class ProlongBookingView(LoginRequiredMixin, View):
 
 
 class DeleteBookingView(LoginRequiredMixin, View):
+    """
+    Представление для удаления бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
     model = Booking
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """
+        Обработка POST-запросов для удаления бронирования.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponse:
+                Перенаправляет на страницу управления бронированиями или страницу бронирований пользователя.
+        """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.delete()
         if request.user.is_staff:

@@ -18,14 +18,56 @@ logger = logging.getLogger("parking_area.views")
 
 
 class AddParkingAreaView(LoginRequiredMixin, View):
+    """
+    Представление для добавления парковки.
+
+    Атрибуты:
+        template_name (str):
+            Имя шаблона для отображения страницы добавления парковки.
+        model (Model):
+            Модель парковки.
+        form_class (Form):
+            Класс формы для создания парковки.
+    """
+
     template_name = "pages/parking/add.html"
     model = ParkingArea
     form_class = ParkingAreaCreateForm
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """
+        Обработка GET-запросов для отображения страницы добавления парковки.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponse:
+                HTTP-ответ с отображённым шаблоном добавления парковки.
+        """
         return render(request, self.template_name, {"form": self.form_class})
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
+        """
+        Обработка POST-запросов для добавления парковки.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            JsonResponse:
+                JSON-ответ с информацией о успешности добавления.
+        """
         form = ParkingAreaCreateForm(request.POST)
         is_success = True
         if form.is_valid():
@@ -43,27 +85,86 @@ class AddParkingAreaView(LoginRequiredMixin, View):
 
 
 class DeleteParkingAreaView(LoginRequiredMixin, DeleteView):
+    """
+    Представление для удаления парковки.
+
+    Атрибуты:
+        template_name (str):
+            Имя шаблона для отображения страницы удаления парковки.
+        model (Model):
+            Модель парковки.
+        success_url (str):
+            URL для перенаправления после успешного удаления парковки.
+    """
+
     template_name = "pages/parking/delete.html"
     model = ParkingArea
     success_url = reverse_lazy("index")
 
 
 class DetailParkingAreaView(DetailView):
+    """
+    Представление для отображения детальной информации об парковки.
+
+    Атрибуты:
+        template_name (str):
+            Имя шаблона для отображения страницы с детальной информацией.
+        model (Model):
+            Модель парковки.
+    """
+
     template_name = "pages/parking/detail.html"
     model = ParkingArea
 
 
 class UpdateParkingAreaView(LoginRequiredMixin, UpdateView):
+    """
+    Представление для обновления информации об парковки.
+
+    Атрибуты:
+        template_name (str):
+            Имя шаблона для отображения страницы обновления информации.
+        model (Model):
+            Модель парковки.
+        form_class (Form):
+            Класс формы для обновления информации об парковки.
+    """
+
     template_name = "pages/parking/update.html"
     model = ParkingArea
     form_class = ParkingAreaUpdateForm
 
 
 class ManagementParkingAreaView(LoginRequiredMixin, View):
+    """
+    Представление для управления парковки.
+
+    Атрибуты:
+        template_name (str):
+            Имя шаблона для отображения страницы управления парковкой.
+        model (Model):
+            Модель парковки.
+    """
+
     template_name = "pages/parking/management.html"
     model = ParkingArea
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """
+        Обработка GET-запросов для отображения страницы управления парковкой.
+
+        Аргументы:
+            request (HttpRequest):
+                Объект HTTP-запроса.
+            *args (Any):
+                Дополнительные позиционные аргументы.
+            **kwargs (Any):
+                Дополнительные именованные аргументы.
+
+        Возвращает:
+            HttpResponse:
+                HTTP-ответ с отображённым шаблоном управления парковкой.
+        """
         context = {"parking": None, "now": timezone.now()}
         try:
             parking: ParkingArea = ParkingArea.objects.get(manager=request.user)

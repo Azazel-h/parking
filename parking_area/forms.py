@@ -4,6 +4,10 @@ from parking_area.models import ParkingArea
 
 
 class ParkingAreaCreateForm(ModelForm):
+    """
+    Форма для создания парковки.
+    """
+
     class Meta:
         model = ParkingArea
         fields = ("address", "all_slots", "price", "manager")
@@ -34,6 +38,10 @@ class ParkingAreaCreateForm(ModelForm):
 
 
 class ParkingAreaUpdateForm(ModelForm):
+    """
+    Форма для обновления информации об парковки.
+    """
+
     class Meta:
         model = ParkingArea
         fields = (

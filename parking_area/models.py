@@ -4,6 +4,26 @@ from core import settings
 
 
 class ParkingArea(models.Model):
+    """
+    Модель парковки.
+
+    Attributes:
+        manager (OneToOneField):
+            Менеджер парковки.
+        all_slots (PositiveIntegerField):
+            Общее количество парковочных мест.
+        price (DecimalField):
+            Цена за час парковки.
+        free_slots (PositiveIntegerField):
+            Количество свободных парковочных мест.
+        address (CharField):
+            Адрес парковки.
+        latitude (FloatField):
+            Широта местоположения парковки.
+        longitude (FloatField):
+            Долгота местоположения парковки.
+    """
+
     manager = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -19,4 +39,10 @@ class ParkingArea(models.Model):
     longitude = models.FloatField(default=0, null=False, blank=False)
 
     def get_absolute_url(self) -> str:
+        """
+        Возвращает абсолютный URL для парковки.
+
+        Returns:
+            str: Абсолютный URL для парковки.
+        """
         return reverse("detail-parking-area", kwargs={"pk": self.pk})

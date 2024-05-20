@@ -6,6 +6,16 @@ from accounts.models import CustomUser
 
 
 class CustomUserCreateForm(UserCreationForm):
+    """
+    Форма для создания пользователей.
+
+    Attributes:
+        first_name (CharField):
+            Поле для ввода имени пользователя.
+        last_name (CharField):
+            Поле для ввода фамилии пользователя.
+    """
+
     first_name = forms.CharField(max_length=50, label="Имя")
     last_name = forms.CharField(max_length=50, label="Фамилия")
 
@@ -14,13 +24,21 @@ class CustomUserCreateForm(UserCreationForm):
         fields = ("username", "first_name", "last_name", "email")
 
 
-class CustomUserEditForm(UserChangeForm):
+class CustomUserAdminEditForm(UserChangeForm):
+    """
+    Форма для изменения пользователей в админке.
+    """
+
     class Meta:
         model = CustomUser
         fields = ("username", "first_name", "last_name", "email")
 
 
-class BalanceUpdateForm(ModelForm):
+class UserUpdateForm(ModelForm):
+    """
+    Форма для обновления информации о пользователе.
+    """
+
     class Meta:
         model = CustomUser
         fields = ("first_name", "last_name", "email", "telegram_tag", "balance")
