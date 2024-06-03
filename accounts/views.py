@@ -68,11 +68,14 @@ class UserUpdateView(LoginRequiredMixin, View):
             HttpResponseRedirect:
                 Перенаправляет на URL успеха, если форма валидна, в противном случае повторно отображает форму.
         """
-        form = UserUpdateForm(request.POST)
+        form = self.form_class(request.POST, instance=request.user)
         if form.is_valid():
             request.user.update(**form.cleaned_data)
             request.user.save()
-        return redirect("index")
+            return redirect(self.success_url)
+        else:
+            context = {"form": form, "bot_tag": os.getenv("BOT_TAG")}
+            return render(request, self.template_name, context)
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
@@ -90,7 +93,6 @@ class UserUpdateView(LoginRequiredMixin, View):
             HttpResponse:
                 HTTP-ответ с отображённым шаблоном.
         """
-        context = {"form": self.form_class}
-        load_dotenv()
-        context["bot_tag"] = os.getenv("BOT_TAG")
-        return render(request, self.template_name, context=context)
+        form = self.form_class(instance=request.user)
+        context = {"form": form, "bot_tag": os.getenv("BOT_TAG")}
+        return render(request, self.template_name, context)

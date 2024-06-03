@@ -1,11 +1,13 @@
 import decimal
+import os
+
 from .models import Booking
 import requests
 import logging
 from urllib.parse import quote
 
 logger = logging.getLogger("booking.views")
-TOKEN = "6952995842:AAEyiJb8WF0oSwpQPPxMAQbRXElDwfGiin0"
+TOKEN = os.environ.get("BOT_TOKEN")
 
 
 def notify_user(booking_id: int) -> None:
@@ -19,7 +21,7 @@ def notify_user(booking_id: int) -> None:
                 f"<b>Напоминание о завершении бронирования</b>\n"
                 f"Уважаемый {user.last_name} {user.first_name}, ваше бронирование заканчивается через 5 минут.\n"
                 f"Вы можете перейти по ссылке и продлить его!\n\n"
-                '<a href="http://127.0.0.1:8000/booking/history/">Ссылка</a>'
+                f'<a href="http://127.0.0.1:{os.environ.get("DJANGO_PORT")}/booking/history/">Ссылка</a>'
             )
             encoded_text = quote(text)
             url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=HTML&text={encoded_text}"
@@ -42,6 +44,8 @@ def end_booking(booking_id: int) -> None:
         total_cost = decimal.Decimal(duration_in_hours) * booking.parking.price
 
         booking.user.balance -= total_cost
+        if booking.user.balance < 0:
+            booking.user.balance = 0
         booking.user.save()
         logger.debug(
             f"Booking [{booking.pk} - {booking.user.username}] ended for {total_cost} RUB."

@@ -22,6 +22,8 @@ services:
              python3 /app/manage.py makemigrations &&
              python3 /app/manage.py migrate &&
              python3 /app/manage.py runserver 0.0.0.0:${DJANGO_PORT}"
+    env_file:
+      - ./.env
     depends_on:
       - queue
 
@@ -34,6 +36,8 @@ services:
       - .:/app
     command: >
       sh -c "python3 /app/manage.py qcluster"
+    env_file:
+      - ./.env
     depends_on:
       - redis
 
@@ -46,5 +50,7 @@ services:
       - .:/app
     command: >
       sh -c "python3 -m notifications"
+    env_file:
+      - ./.env
     depends_on:
       - web
