@@ -147,7 +147,7 @@ class ManagementView(LoginRequiredMixin, ListView):
             )
             if booking.slot_number == slot_num:
                 # Handle cases where booking spans across the next day (e.g., 22:57 - 23:58)
-                if booking_start_time_local_rounded <= booking_end_time_local_rounded:
+                if booking_start_time_local_rounded < booking_end_time_local_rounded:
                     if (
                         booking_start_time_local_rounded
                         <= time_hour
@@ -389,8 +389,8 @@ class ProlongBookingView(LoginRequiredMixin, View):
             Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
         except Exception as ex:
             logger.error(ex)
-        new_end_time = booking.end_time + timezone.timedelta(minutes=30)
-        booking.end_time = new_end_time  # Время продления бронирования
+        new_end_time = booking.booking_end_time + timezone.timedelta(minutes=30)
+        booking.booking_end_time = new_end_time
 
         booking.notify_schedule = schedule(
             "booking.tasks.notify_user",
@@ -405,6 +405,7 @@ class ProlongBookingView(LoginRequiredMixin, View):
             schedule_type="O",
             next_run=new_end_time,
         )
+        booking.was_prolonged = True
         booking.save()
 
         try:

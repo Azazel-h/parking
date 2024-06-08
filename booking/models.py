@@ -52,4 +52,5 @@ class Booking(models.Model):
     slot_number = models.IntegerField(null=True, blank=True)
     conformation_time = models.DateTimeField(null=True, blank=True)
     is_canceled = models.BooleanField(default=False)
+    was_prolonged = models.BooleanField(default=False)
 

@@ -29,18 +29,10 @@
                             <tr>
                                 <td>{{ record.creation_time }}</td>
                                 <td>
-                                    {% if record.start_time is not None %}
-                                        {{ record.start_time }}
-                                    {% else %}
-                                        {{ record.booking_start_time }}
-                                    {% endif %}
+                                    {{ record.booking_start_time }}
                                 </td>
                                 <td>
-                                    {% if record.end_time is not None %}
-                                        {{ record.end_time }}
-                                    {% else %}
-                                        {{ record.booking_end_time }}
-                                    {% endif %}
+                                    {{ record.booking_end_time }}
                                 </td>
                                 <td>
                                     {% if record.conformation_time is not None %}
@@ -64,12 +56,14 @@
                                             <input type="submit" class="btn btn-warning" value="Закончить">
                                         </form>
                                     </td>
-                                    <td>
-                                        <form method="POST" action="{% url 'prolong-booking' pk=record.pk %}">
-                                            {% csrf_token %}
-                                            <input type="submit" class="btn btn-primary" value="Продлить">
-                                        </form>
-                                    </td>
+                                    {% if not record.was_prolonged %}
+                                        <td>
+                                            <form method="POST" action="{% url 'prolong-booking' pk=record.pk %}">
+                                                {% csrf_token %}
+                                                <input type="submit" class="btn btn-primary" value="Продлить">
+                                            </form>
+                                        </td>
+                                    {% endif %}
                                     <td colspan="2">
                                         <form method="POST" action="{% url 'cancel-booking' pk=record.pk %}">
                                             {% csrf_token %}
