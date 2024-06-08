@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional
 from django.utils import timezone
 from django.views.generic import ListView
 from django.db.models import Q, QuerySet
+
+from booking.forms import BookingAddForm
 from booking.models import ParkingArea, Booking
 
 
@@ -40,4 +42,5 @@ class IndexView(ListView):
                 | Q(user=self.request.user, end_time__isnull=True)
             ).first()
         context["has_booking"] = has_booking
+        context["booking_form"] = BookingAddForm()
         return context

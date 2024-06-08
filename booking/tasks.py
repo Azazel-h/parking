@@ -36,7 +36,6 @@ def end_booking(booking_id: int) -> None:
         logger.debug("Ending booking")
         booking: Booking = Booking.objects.get(pk=booking_id)
 
-        booking.parking.free_slots += 1
         booking.parking.save()
 
         duration = booking.end_time - booking.start_time

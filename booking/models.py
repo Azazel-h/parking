@@ -42,5 +42,13 @@ class Booking(models.Model):
         blank=True,
     )
     creation_time = models.DateTimeField(auto_now_add=True)
+
+    booking_start_time = models.DateTimeField()
     start_time = models.DateTimeField(null=True, blank=True)
+
+    booking_end_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
+
+    slot_number = models.IntegerField(null=True, blank=True)
+    conformation_time = models.DateTimeField(null=True, blank=True)
+

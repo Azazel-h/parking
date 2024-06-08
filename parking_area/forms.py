@@ -46,7 +46,6 @@ class ParkingAreaUpdateForm(ModelForm):
         model = ParkingArea
         fields = (
             "all_slots",
-            "free_slots",
             "price",
             "manager",
             "address",
@@ -56,7 +55,6 @@ class ParkingAreaUpdateForm(ModelForm):
         labels = {
             "address": "Адрес",
             "all_slots": "Количество мест",
-            "free_slots": "Свободные места",
             "price": "Цена за час парковки",
             "manager": "Менеджер",
             "latitude": "Широта",

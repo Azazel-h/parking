@@ -5,48 +5,88 @@
 {% endblock %}
 
 {% block content %}
-
     <div class="container pb-3 pt-3">
         <div class="card card-body content">
-            <h4 class="card-title">Список заявок на бронирование</h4>
+            <h4 class="card-title">Расписание парковки {{ parking.address }}</h4>
             <hr>
-            {% if booking_list %}
-                <div class="container">
-                    <table class="table">
-                        <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Время создания</th>
-                            <th scope="col">Имя</th>
-                            <th scope="col">Фамилия</th>
-                            <th scope="col">Логин</th>
-                            <th scope="col">Подтверждение</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for record in booking_list %}
-                            {% if record.start_time == None %}
-                                <tr>
-                                <th scope="row"><a href="{{ record.get_absolute_url }}">{{ record.pk }}</a></th>
-                                <td>{{ record.creation_time }}</td>
-                                <td>{{ record.user.first_name }}</td>
-                                <td>{{ record.user.last_name }}</td>
-                                <td>{{ record.user.username }}</td>
-                                <td>
-                                <form method="POST" action="{% url 'start-booking' pk=record.pk %}">
-                                    {% csrf_token %}
-                                    <input type="submit" class="btn btn-success" value="Подтвердить">
-                                </form>
-                            {% endif %}
-                        </td>
-                        </tr>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th></th> <!-- Пустая ячейка в верхнем левом углу -->
+                        {% for slot_num in slots_range %}
+                            <th>Место {{ slot_num|add:1 }}</th> <!-- Заголовки слотов -->
                         {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p>Нет доступных заявок.</p>
-            {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for time_hour, slots_data in slots.items %}
+                        <tr>
+                            <td>{{ time_hour|time:"H:i" }} - {{ time_hour|time:"H"|add:"1" }}:00</td>
+                            <!-- Время слева -->
+                            {% for slot_num, slot_data in slots_data.items %}
+                                <td class="text-center {% if slot_data.booking %}table-danger{% else %}table-success{% endif %}">
+                                    {% if slot_data.booking %}
+                                        ❌
+                                    {% else %}
+                                        <!-- Если бронирования нет, отобразить свободно -->
+                                        ✅
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card card-body content">
+                <h4 class="card-title">Список заявок на бронирование</h4>
+                <hr>
+                {% if booking_list %}
+                    <div class="container">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Время создания</th>
+                                <th scope="col">Имя</th>
+                                <th scope="col">Фамилия</th>
+                                <th scope="col">Время бронирования</th>
+                                <th scope="col" colspan="2">Подтверждение</th>
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for record in booking_list %}
+                                {% if record.start_time == None %}
+                                    <tr>
+                                    <td>{{ record.creation_time }}</td>
+                                    <td>{{ record.user.first_name }}</td>
+                                    <td>{{ record.user.last_name }}</td>
+                                    <td>
+                                        {{ record.booking_start_time }} - {{ record.booking_end_time }}
+                                    </td>
+                                    <form method="POST" action="{% url 'confirm-booking' pk=record.pk %}">
+                                        {% csrf_token %}
+                                        <td>
+                                            {{ confirm_form | crispy }}
+                                        </td>
+                                        <td>
+                                            <input type="submit" class="btn btn-success" value="Подтвердить">
+                                        </td>
+                                    </form>
+
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>Нет доступных заявок.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}

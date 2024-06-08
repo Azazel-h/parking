@@ -5,6 +5,7 @@
             type="text/javascript"></script>
 {% endblock %}
 {% load static %}
+{% load crispy_forms_filters %}
 
 {% block title %}
     Главная
@@ -44,11 +45,12 @@
                                 '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'detail-parking-area' pk=i.id %}">{{ i.address }}</a></h6>\n' +
                                 '<h6 class="card-title"><span class="text-secondary">Свободных мест: {{ i.free_slots }}/{{ i.all_slots }}</h6>\n' +
                                 '<h6 class="card-title"><span class="text-secondary">Тариф: {{ i.price }} руб./ч</h6>\n' +
-                                {% if i.free_slots <= 0 or has_booking %}
+                                {% if has_booking %}
                                     '<h6 class="card-title"><span class="text-secondary">Недоступно</h6><br>\n' +
                                 {% elif not user.is_superuser and not user.is_staff %}
                                     '<form method="POST" action="{% url 'add-booking' pk=i.id %}">' +
                                     '{% csrf_token %}' +
+                                    '{{ booking_form|crispy|linebreaksbr|safe|cut:'<br>' }}' +
                                     '<input type="submit" class="btn btn-primary mb-1 btn-sm btn-block" value="Забронировать место"><br>\n'
                                     +
                                     '</form>' +

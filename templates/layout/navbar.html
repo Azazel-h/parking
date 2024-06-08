@@ -24,12 +24,12 @@
                         {% elif user.is_staff and not user.is_superuser %}
                             {% block manage_booking_tab %}
                                 <li class="nav-item"><a class="nav-link" href="{% url 'booking-management' %}">
-                                    Список заявок на бронирование </a>
+                                    Бронирование </a>
                                 </li>
                             {% endblock %}
                             {% block manage_parking_tab %}
                                 <li class="nav-item"><a class="nav-link" href="{% url 'parking-management' %}">
-                                    Управление парковкой </a>
+                                    Парковка </a>
                                 </li>
                             {% endblock %}
                         {% elif not user.is_staff and not user.is_superuser %}

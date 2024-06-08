@@ -33,7 +33,6 @@ class ParkingArea(models.Model):
     price = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=False, blank=False
     )
-    free_slots = models.PositiveIntegerField(default=1)
     address = models.CharField(max_length=512)
     latitude = models.FloatField(default=0, null=False, blank=False)
     longitude = models.FloatField(default=0, null=False, blank=False)

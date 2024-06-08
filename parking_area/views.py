@@ -73,7 +73,6 @@ class AddParkingAreaView(LoginRequiredMixin, View):
         if form.is_valid():
             logger.debug("Adding new parking area")
             new_parking_data = form.cleaned_data
-            new_parking_data["free_slots"] = form.data.get("all_slots")
             new_parking_data["latitude"] = form.data.get("latitude")
             new_parking_data["longitude"] = form.data.get("longitude")
             ParkingArea(**new_parking_data).save()
@@ -165,13 +164,13 @@ class ManagementParkingAreaView(LoginRequiredMixin, View):
             HttpResponse:
                 HTTP-ответ с отображённым шаблоном управления парковкой.
         """
-        context = {"parking": None, "now": timezone.now()}
+        context = {"parking": None, "now": timezone.now(), "booking_list": None}
         try:
             parking: ParkingArea = ParkingArea.objects.get(manager=request.user)
             context["parking"] = parking
             context["booking_list"] = Booking.objects.filter(
-                parking=parking, start_time__isnull=False
-            ).order_by("-start_time")
+                parking=parking, conformation_time__isnull=False
+            ).order_by("-booking_start_time")
         except ParkingArea.DoesNotExist:
             logger.error("No managed parking")
 

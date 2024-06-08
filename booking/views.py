@@ -1,13 +1,15 @@
+import datetime
 from typing import Any, List, Dict
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 
+from booking.forms import BookingAddForm, ConfirmBookingForm
 from booking.models import Booking
 from booking.tasks import end_booking
 
@@ -29,6 +31,7 @@ class AddBookingView(LoginRequiredMixin, View):
     """
 
     model = Booking
+    form_class = BookingAddForm
 
     def post(
         self, request: HttpRequest, *args: Any, **kwargs: Any
@@ -48,24 +51,25 @@ class AddBookingView(LoginRequiredMixin, View):
             HttpResponseRedirect:
                 Перенаправляет на главную страницу.
         """
-        parking = ParkingArea.objects.get(pk=kwargs["pk"])
-        if (
-            parking.free_slots >= 1
-            and not Booking.objects.filter(
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            form_data = form.cleaned_data
+            logger.debug(form_data)
+            parking = ParkingArea.objects.get(pk=kwargs["pk"])
+            if not Booking.objects.filter(
                 user=request.user, end_time__gt=timezone.now()
-            ).first()
-        ):
-            new_booking_data = {
-                "user": request.user,
-                "parking": parking,
-                "creation_time": timezone.now(),
-                "start_time": None,
-                "end_time": None,
-            }
-            Booking(**new_booking_data).save()
-            parking.save()
-            logger.debug("Adding new booking")
-
+            ).first():
+                new_booking_data = {
+                    "user": request.user,
+                    "parking": parking,
+                    "creation_time": timezone.now(),
+                    "booking_start_time": form_data.get("booking_start_time"),
+                    "booking_end_time": form_data.get("booking_end_time"),
+                    "start_time": None,
+                    "end_time": None,
+                }
+                Booking(**new_booking_data).save()
+                logger.debug("Adding new booking")
         return redirect("index")
 
 
@@ -100,15 +104,65 @@ class ManagementView(LoginRequiredMixin, ListView):
             List[Booking]:
                 Список объектов бронирований.
         """
-        parkings: QuerySet = ParkingArea.objects.filter(manager=self.request.user)
+        parking: QuerySet = ParkingArea.objects.filter(
+            manager=self.request.user
+        ).first()
         booking_records = []
-        for parking in parkings:
-            for i in Booking.objects.filter(
-                parking=parking, start_time__isnull=True
-            ).order_by("-start_time"):
-                booking_records.append(i)
-        logger.debug(booking_records)
+        for i in Booking.objects.filter(
+            parking=parking, conformation_time__isnull=True
+        ).order_by("-start_time"):
+            booking_records.append(i)
+
         return booking_records
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        parking = ParkingArea.objects.get(manager=self.request.user)
+        bookings = Booking.objects.filter(
+            parking=parking,
+        ).order_by("start_time")
+
+        slots = {}
+        # Заполнение данных для каждого парковочного места
+        for time_hour in [datetime.time(hour) for hour in range(23)]:
+            slots[time_hour] = {}
+            for slot_num in range(1, parking.all_slots + 1):
+                slots[time_hour][slot_num] = {
+                    "next_hour": datetime.time(time_hour.hour + 1, 0),
+                    "booking": self.get_booking_for_slot(bookings, slot_num, time_hour),
+                }
+
+        context["slots"] = slots
+        context["slots_range"] = range(parking.all_slots)
+        context["parking"] = parking
+        context["confirm_form"] = ConfirmBookingForm(max_slot=parking.all_slots)
+        return context
+
+    def get_booking_for_slot(self, bookings, slot_num, time_hour):
+        for booking in bookings:
+            booking_start_time_local = timezone.localtime(
+                booking.booking_start_time
+            ).time()
+            booking_end_time_local = timezone.localtime(booking.booking_end_time).time()
+
+            booking_start_time_local_rounded = datetime.time(
+                booking_start_time_local.hour, 0
+            )
+            booking_end_time_local_rounded = datetime.time(
+                booking_end_time_local.hour + 1, 0
+            )
+
+            if (
+                booking_start_time_local_rounded
+                <= time_hour
+                <= booking_end_time_local_rounded
+                and booking.slot_number == slot_num
+            ):
+                logger.debug(
+                    f"{booking_start_time_local} - {time_hour} - {booking_end_time_local}"
+                )
+                return booking
+        return None
 
 
 class UserBookingView(LoginRequiredMixin, ListView):
@@ -164,6 +218,35 @@ class UserBookingView(LoginRequiredMixin, ListView):
         return context
 
 
+class ConfirmBookingView(LoginRequiredMixin, View):
+    model = Booking
+
+    def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=self.kwargs["pk"])
+        booking.conformation_time = timezone.now()
+        booking.end_time = booking.booking_end_time
+        booking.slot_number = request.POST.get("slot_number")
+        booking.save()
+
+        # Установка расписания для уведомления пользователя
+        booking.notify_schedule = schedule(
+            "booking.tasks.notify_user",
+            booking.id,
+            schedule_type="O",
+            next_run=booking.end_time - timezone.timedelta(minutes=5),
+        )
+
+        # Установка расписания для окончания бронирования
+        booking.end_schedule = schedule(
+            "booking.tasks.end_booking",
+            booking.id,
+            schedule_type="O",
+            next_run=booking.end_time,
+        )
+        booking.save()
+        return redirect("booking-management")
+
+
 class StartBookingView(LoginRequiredMixin, View):
     """
     Представление для начала бронирования.
@@ -174,50 +257,40 @@ class StartBookingView(LoginRequiredMixin, View):
     """
 
     model = Booking
+    form_class = ConfirmBookingForm
 
-    def post(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponseRedirect:
-        """
-        Обработка POST-запросов для начала бронирования.
+    def post(self, request, *args, **kwargs):
+        booking = Booking.objects.get(pk=self.kwargs["pk"])
 
-        Аргументы:
-            request (HttpRequest):
-                Объект HTTP-запроса.
-            *args (Any):
-                Дополнительные позиционные аргументы.
-            **kwargs (Any):
-                Дополнительные именованные аргументы.
+        # Создание экземпляра формы
+        form = self.form_class(request.POST)
 
-        Возвращает:
-            HttpResponseRedirect:
-                Перенаправляет на страницу управления бронированиями.
-        """
-        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
-        booking.start_time = timezone.now()
-        booking.end_time = timezone.now() + timezone.timedelta(
-            minutes=6
-        )  # Время бронирования
+        # Проверка валидности формы
+        if form.is_valid():
+            # Установка времени начала и окончания бронирования
+            form_data = form.cleaned_data
+            booking.conformation_time = timezone.now()
+            booking.end_time = booking.booking_end_time
+            booking.slot_number = form_data.get("slot_number")
+            booking.save()
 
-        booking.parking.free_slots -= 1
-        booking.parking.save()
+            # Установка расписания для уведомления пользователя
+            booking.notify_schedule = schedule(
+                "booking.tasks.notify_user",
+                booking.id,
+                schedule_type="O",
+                next_run=booking.end_time - timezone.timedelta(minutes=5),
+            )
 
-        booking.save()
+            # Установка расписания для окончания бронирования
+            booking.end_schedule = schedule(
+                "booking.tasks.end_booking",
+                booking.id,
+                schedule_type="O",
+                next_run=booking.end_time,
+            )
+            booking.save()
 
-        booking.notify_schedule = schedule(
-            "booking.tasks.notify_user",
-            booking.id,
-            schedule_type="O",
-            next_run=booking.end_time - timezone.timedelta(minutes=5),
-        )
-
-        booking.end_schedule = schedule(
-            "booking.tasks.end_booking",
-            booking.id,
-            schedule_type="O",
-            next_run=booking.end_time,
-        )
-        booking.save()
         return redirect("booking-management")
 
 

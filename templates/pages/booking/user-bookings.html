@@ -15,10 +15,10 @@
                     <table class="table">
                         <thead>
                         <tr>
-                            <th scope="col">#</th>
                             <th scope="col">Время создания</th>
+                            <th scope="col">Время начала бронирования</th>
+                            <th scope="col">Время окончания бронирования</th>
                             <th scope="col">Время подтверждения</th>
-                            <th scope="col">Время окончания</th>
                             <th scope="col"></th>
                             <th scope="col"></th>
                         </tr>
@@ -26,8 +26,21 @@
                         <tbody>
                         {% for record in booking_list %}
                             <tr>
-                                <th scope="row"><a href="{{ record.get_absolute_url }}">{{ record.pk }}</a></th>
                                 <td>{{ record.creation_time }}</td>
+                                <td>
+                                    {% if record.start_time is not None %}
+                                        {{ record.start_time }}
+                                    {% else %}
+                                        {{ record.booking_start_time }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.end_time is not None %}
+                                        {{ record.end_time }}
+                                    {% else %}
+                                        {{ record.booking_end_time }}
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if record.start_time is not None %}
                                         {{ record.start_time }}
@@ -35,13 +48,7 @@
                                         На подтверждении
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if record.end_time is not None %}
-                                        {{ record.end_time }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
+
                                 {% if record.end_time is not None and record.end_time > now %}
                                     <td>
                                         <form method="POST" action="{% url 'end-booking' pk=record.pk %}">

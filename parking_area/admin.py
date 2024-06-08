@@ -9,7 +9,6 @@ class ParkingAdmin(admin.ModelAdmin):
         "latitude",
         "longitude",
         "all_slots",
-        "free_slots",
         "address",
         "manager",
         "price",
