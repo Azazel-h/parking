@@ -4,7 +4,7 @@ from typing import Any, List, Dict
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
 from django.http import HttpResponseRedirect, HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
@@ -24,10 +24,6 @@ logger = logging.getLogger("parking_area.views")
 class AddBookingView(LoginRequiredMixin, View):
     """
     Представление для добавления бронирования.
-
-    Атрибуты:
-        model (Model):
-            Модель бронирования.
     """
 
     model = Booking
@@ -38,40 +34,42 @@ class AddBookingView(LoginRequiredMixin, View):
     ) -> HttpResponseRedirect:
         """
         Обработка POST-запросов для добавления бронирования.
-
-        Аргументы:
-            request (HttpRequest):
-                Объект HTTP-запроса.
-            *args (Any):
-                Дополнительные позиционные аргументы.
-            **kwargs (Any):
-                Дополнительные именованные аргументы.
-
-        Возвращает:
-            HttpResponseRedirect:
-                Перенаправляет на главную страницу.
         """
         form = self.form_class(request.POST)
         if form.is_valid():
             form_data = form.cleaned_data
-            logger.debug(form_data)
-            parking = ParkingArea.objects.get(pk=kwargs["pk"])
-            if not Booking.objects.filter(
-                user=request.user, end_time__gt=timezone.now()
-            ).first():
+            logger.debug("Form data: %s", form_data)
+            parking = get_object_or_404(ParkingArea, pk=kwargs["pk"])
+
+            # Check for existing active bookings
+            now = timezone.now()
+            existing_booking = Booking.objects.filter(
+                user=request.user, booking_end_time__gt=now, is_canceled=False
+            ).first()
+
+            if not existing_booking:
                 new_booking_data = {
                     "user": request.user,
                     "parking": parking,
-                    "creation_time": timezone.now(),
+                    "creation_time": now,
                     "booking_start_time": form_data.get("booking_start_time"),
                     "booking_end_time": form_data.get("booking_end_time"),
                     "start_time": None,
                     "end_time": None,
                 }
-                Booking(**new_booking_data).save()
-                logger.debug("Adding new booking")
+                Booking.objects.create(**new_booking_data)
+                logger.debug("New booking added for user %s", request.user)
+            else:
+                logger.error(
+                    "Existing active booking found: %s with end time %s",
+                    existing_booking.pk,
+                    existing_booking.booking_end_time,
+                )
         else:
-            logger.debug(form.errors)
+            logger.debug("Form errors: %s", form.errors)
+            # Optionally, you can return the form with errors back to the user
+            # return render(request, 'your_template.html', {'form': form})
+
         return redirect("index")
 
 
@@ -95,47 +93,37 @@ class ManagementView(LoginRequiredMixin, ListView):
     def get_queryset(self, *args: Any, **kwargs: Any) -> List[Booking]:
         """
         Получение списка бронирований.
-
-        Аргументы:
-            *args (Any):
-                Дополнительные позиционные аргументы.
-            **kwargs (Any):
-                Дополнительные именованные аргументы.
-
-        Возвращает:
-            List[Booking]:
-                Список объектов бронирований.
         """
-        parking: QuerySet = ParkingArea.objects.filter(
-            manager=self.request.user
-        ).first()
-        booking_records = []
-        for i in Booking.objects.filter(
-            parking=parking, conformation_time__isnull=True, is_canceled=False
-        ).order_by("-start_time"):
-            booking_records.append(i)
+        parking = ParkingArea.objects.filter(manager=self.request.user).first()
+        if not parking:
+            return []
 
-        return booking_records
+        return Booking.objects.filter(
+            parking=parking, conformation_time__isnull=True, is_canceled=False
+        ).order_by("-start_time")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        parking = ParkingArea.objects.get(manager=self.request.user)
+        parking = get_object_or_404(ParkingArea, manager=self.request.user)
         bookings = Booking.objects.filter(
-            parking=parking, is_canceled=False, conformation_time__isnull=True
+            parking=parking, is_canceled=False, end_time__gt=timezone.now()
         ).order_by("start_time")
 
         slots = {}
         # Заполнение данных для каждого парковочного места
-        for time_hour in [datetime.time(hour) for hour in range(23)]:
-            slots[time_hour] = {}
-            for slot_num in range(1, parking.all_slots + 1):
-                slots[time_hour][slot_num] = {
-                    "next_hour": datetime.time(time_hour.hour + 1, 0),
+        for hour in range(24):
+            time_hour = datetime.time(hour)
+            next_hour = datetime.time((hour + 1) % 24)
+            slots[time_hour] = {
+                slot_num: {
+                    "next_hour": next_hour,
                     "booking": self.get_booking_for_slot(bookings, slot_num, time_hour),
                 }
+                for slot_num in range(1, parking.all_slots + 1)
+            }
 
         context["slots"] = slots
-        context["slots_range"] = range(parking.all_slots)
+        context["slots_range"] = range(1, parking.all_slots + 1)
         context["parking"] = parking
         context["confirm_form"] = ConfirmBookingForm(max_slot=parking.all_slots)
         return context
@@ -145,25 +133,39 @@ class ManagementView(LoginRequiredMixin, ListView):
             booking_start_time_local = timezone.localtime(
                 booking.booking_start_time
             ).time()
+
             booking_end_time_local = timezone.localtime(booking.booking_end_time).time()
 
             booking_start_time_local_rounded = datetime.time(
                 booking_start_time_local.hour, 0
             )
             booking_end_time_local_rounded = datetime.time(
-                booking_end_time_local.hour + 1, 0
+                (booking_end_time_local.hour + 1) % 24, 0
             )
-
-            if (
-                booking_start_time_local_rounded
-                <= time_hour
-                <= booking_end_time_local_rounded
-                and booking.slot_number == slot_num
-            ):
-                logger.debug(
-                    f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
-                )
-                return booking
+            logger.debug(
+                f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
+            )
+            if booking.slot_number == slot_num:
+                # Handle cases where booking spans across the next day (e.g., 22:57 - 23:58)
+                if booking_start_time_local_rounded <= booking_end_time_local_rounded:
+                    if (
+                        booking_start_time_local_rounded
+                        <= time_hour
+                        < booking_end_time_local_rounded
+                    ):
+                        logger.debug(
+                            f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
+                        )
+                        return booking
+                else:  # Overlapping case (e.g., 23:00 to 00:00)
+                    if (
+                        time_hour >= booking_start_time_local_rounded
+                        or time_hour < booking_end_time_local_rounded
+                    ):
+                        logger.debug(
+                            f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
+                        )
+                        return booking
         return None
 
 
@@ -247,10 +249,14 @@ class ConfirmBookingView(LoginRequiredMixin, View):
         )
         booking.save()
 
-        send_custom_message(
-            user=booking.user,
-            msg="Ваше бронирование было успешно подтверждено!",
-        )
+        try:
+            send_custom_message(
+                user=booking.user,
+                msg="Ваше бронирование было успешно подтверждено!",
+            )
+        except:
+            pass
+
         return redirect("booking-management")
 
 
@@ -401,10 +407,13 @@ class ProlongBookingView(LoginRequiredMixin, View):
         )
         booking.save()
 
-        send_custom_message(
-            user=booking.user,
-            msg="Ваше бронирование успешно продлено на 30 мин.",
-        )
+        try:
+            send_custom_message(
+                user=booking.user,
+                msg="Ваше бронирование успешно продлено на 30 мин.",
+            )
+        except:
+            pass
 
         if request.user.is_staff:
             return redirect("parking-management")
@@ -463,10 +472,13 @@ class CancelBookingView(LoginRequiredMixin, View):
         booking.is_canceled = True
         booking.save()
 
-        send_custom_message(
-            user=booking.user,
-            msg="Ваше бронирование было отменено, создайте новую заявку на другое время.",
-        )
+        try:
+            send_custom_message(
+                user=booking.user,
+                msg="Ваше бронирование было отменено, создайте новую заявку на другое время.",
+            )
+        except:
+            pass
 
         if request.user.is_staff:
             return redirect("parking-management")

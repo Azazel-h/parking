@@ -4,6 +4,8 @@
     Список заявок на бронирование
 {% endblock %}
 
+{% load custom_filters %}
+
 {% block content %}
     <div class="container pb-3 pt-3">
         <div class="card card-body content">
@@ -15,14 +17,15 @@
                     <tr>
                         <th></th> <!-- Пустая ячейка в верхнем левом углу -->
                         {% for slot_num in slots_range %}
-                            <th>Место {{ slot_num|add:1 }}</th> <!-- Заголовки слотов -->
+                            <th>Место {{ slot_num }}</th> <!-- Заголовки слотов -->
                         {% endfor %}
                     </tr>
                     </thead>
                     <tbody>
                     {% for time_hour, slots_data in slots.items %}
                         <tr>
-                            <td>{{ time_hour|time:"H:i" }} - {{ time_hour|time:"H"|add:"1" }}:00</td>
+                            <td>{{ time_hour|time:"H:i" }} - {{ time_hour|time:"H"|add_hour }}</td>
+
                             <!-- Время слева -->
                             {% for slot_num, slot_data in slots_data.items %}
                                 <td class="text-center {% if slot_data.booking %}table-danger{% else %}table-success{% endif %}">

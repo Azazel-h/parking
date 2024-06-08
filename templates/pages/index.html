@@ -44,7 +44,7 @@
                                 '<div class="card-body">\n' +
                                 '<h6 class="card-title"><span class="text-secondary"><a href="{% url 'detail-parking-area' pk=i.id %}">{{ i.address }}</a></h6>\n' +
                                 '<h6 class="card-title"><span class="text-secondary">Всего мест: {{ i.all_slots }}</h6>\n' +
-                                '<h6 class="card-title"><span class="text-secondary">Тариф: {{ i.price }} руб./ч</h6>\n' +
+                                '<h6 class="card-title"><span class="text-secondary">Тариф: {{ i.price }} руб./мин.</h6>\n' +
                                 {% if has_booking %}
                                     '<h6 class="card-title"><span class="text-secondary">Недоступно</h6><br>\n' +
                                 {% elif not user.is_superuser and not user.is_staff %}

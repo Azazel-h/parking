@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from django import forms
@@ -5,6 +6,9 @@ from django.forms import ModelForm, DateTimeInput, TimeInput
 from django.utils import timezone
 
 from .models import Booking
+
+
+logger = logging.getLogger("parking_area.views")
 
 
 class TimeOnlyField(forms.Field):
@@ -20,7 +24,9 @@ class TimeOnlyField(forms.Field):
             raise forms.ValidationError("Введите правильное время.")
 
         # Combine with today's date
-        today = timezone.now().date()
+        local_now = timezone.localtime()
+        today = local_now.date()
+        logger.debug(today)
         return datetime.combine(today, time_obj)
 
 
@@ -37,15 +43,19 @@ class BookingAddForm(ModelForm):
         booking_start_time = cleaned_data.get("booking_start_time")
         booking_end_time = cleaned_data.get("booking_end_time")
 
-        if booking_start_time and booking_end_time:
-            if booking_start_time >= booking_end_time:
-                raise forms.ValidationError(
-                    "Конечное время бронирования должно быть позже начального времени бронирования."
-                )
-            if booking_end_time - booking_start_time < timezone.timedelta(hours=2):
-                raise forms.ValidationError(
-                    "Минимальная продолжительность бронирования должна быть не менее двух часов."
-                )
+        # if booking_start_time and booking_end_time:
+        # if booking_start_time >= timezone.now():
+        #     raise forms.ValidationError(
+        #         "Время бронирования должно быть позже текущего."
+        #     )
+        # if booking_start_time >= booking_end_time:
+        #     raise forms.ValidationError(
+        #         "Конечное время бронирования должно быть позже начального времени бронирования."
+        #     )
+        # if booking_end_time - booking_start_time < timezone.timedelta(hours=2):
+        #     raise forms.ValidationError(
+        #         "Минимальная продолжительность бронирования должна быть не менее двух часов."
+        #     )
 
         return cleaned_data
 
