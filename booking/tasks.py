@@ -36,9 +36,7 @@ def end_booking(booking_id: int) -> None:
         logger.debug("Ending booking")
         booking: Booking = Booking.objects.get(pk=booking_id)
 
-        booking.parking.save()
-
-        duration = booking.end_time - booking.start_time
+        duration = booking.booking_end_time - booking.booking_start_time
         duration_in_hours = duration.total_seconds() / 3600
         total_cost = decimal.Decimal(duration_in_hours) * booking.parking.price
 
@@ -49,5 +47,19 @@ def end_booking(booking_id: int) -> None:
         logger.debug(
             f"Booking [{booking.pk} - {booking.user.username}] ended for {total_cost} RUB."
         )
+    except Exception as ex:
+        logger.warning(ex)
+
+
+def send_custom_message(user, msg) -> None:
+    try:
+        if user.telegram_id:
+            logger.debug("Sending message")
+            chat_id = user.telegram_id
+            text = msg
+            encoded_text = quote(text)
+            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&parse_mode=HTML&text={encoded_text}"
+            logger.debug(url)
+            logger.debug(requests.get(url).json())
     except Exception as ex:
         logger.warning(ex)

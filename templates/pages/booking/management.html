@@ -76,6 +76,12 @@
                                             <input type="submit" class="btn btn-success" value="Подтвердить">
                                         </td>
                                     </form>
+                                    <form method="POST" action="{% url 'cancel-booking' pk=record.pk %}">
+                                        {% csrf_token %}
+                                        <td>
+                                            <input type="submit" class="btn btn-danger" value="Отменить">
+                                        </td>
+                                    </form>
 
                                 {% endif %}
                             </tr>

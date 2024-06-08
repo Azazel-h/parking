@@ -38,8 +38,7 @@ class IndexView(ListView):
         has_booking: Optional[QuerySet] = None
         if self.request.user.is_authenticated:
             has_booking = Booking.objects.filter(
-                Q(user=self.request.user, end_time__gt=timezone.now())
-                | Q(user=self.request.user, end_time__isnull=True)
+                Q(user=self.request.user, booking_end_time__gt=timezone.now(), is_canceled=False)
             ).first()
         context["has_booking"] = has_booking
         context["booking_form"] = BookingAddForm()

@@ -14,7 +14,7 @@ class ParkingAreaCreateForm(ModelForm):
         labels = {
             "address": "Адрес",
             "all_slots": "Количество мест",
-            "price": "Цена за час парковки",
+            "price": "Цена за минуту парковки",
             "manager": "Менеджер",
         }
         widgets = {
@@ -55,7 +55,7 @@ class ParkingAreaUpdateForm(ModelForm):
         labels = {
             "address": "Адрес",
             "all_slots": "Количество мест",
-            "price": "Цена за час парковки",
+            "price": "Цена за минуту парковки",
             "manager": "Менеджер",
             "latitude": "Широта",
             "longitude": "Долгота",

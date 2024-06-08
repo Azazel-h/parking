@@ -13,7 +13,7 @@ class ParkingArea(models.Model):
         all_slots (PositiveIntegerField):
             Общее количество парковочных мест.
         price (DecimalField):
-            Цена за час парковки.
+            Цена за минуту парковки.
         free_slots (PositiveIntegerField):
             Количество свободных парковочных мест.
         address (CharField):

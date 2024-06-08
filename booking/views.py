@@ -11,7 +11,7 @@ from django.views.generic import ListView
 
 from booking.forms import BookingAddForm, ConfirmBookingForm
 from booking.models import Booking
-from booking.tasks import end_booking
+from booking.tasks import end_booking, send_custom_message
 
 from parking_area.models import ParkingArea
 from django_q.tasks import schedule
@@ -70,6 +70,8 @@ class AddBookingView(LoginRequiredMixin, View):
                 }
                 Booking(**new_booking_data).save()
                 logger.debug("Adding new booking")
+        else:
+            logger.debug(form.errors)
         return redirect("index")
 
 
@@ -109,7 +111,7 @@ class ManagementView(LoginRequiredMixin, ListView):
         ).first()
         booking_records = []
         for i in Booking.objects.filter(
-            parking=parking, conformation_time__isnull=True
+            parking=parking, conformation_time__isnull=True, is_canceled=False
         ).order_by("-start_time"):
             booking_records.append(i)
 
@@ -119,7 +121,7 @@ class ManagementView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         parking = ParkingArea.objects.get(manager=self.request.user)
         bookings = Booking.objects.filter(
-            parking=parking,
+            parking=parking, is_canceled=False, conformation_time__isnull=True
         ).order_by("start_time")
 
         slots = {}
@@ -159,7 +161,7 @@ class ManagementView(LoginRequiredMixin, ListView):
                 and booking.slot_number == slot_num
             ):
                 logger.debug(
-                    f"{booking_start_time_local} - {time_hour} - {booking_end_time_local}"
+                    f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
                 )
                 return booking
         return None
@@ -244,6 +246,11 @@ class ConfirmBookingView(LoginRequiredMixin, View):
             next_run=booking.end_time,
         )
         booking.save()
+
+        send_custom_message(
+            user=booking.user,
+            msg="Ваше бронирование было успешно подтверждено!",
+        )
         return redirect("booking-management")
 
 
@@ -324,7 +331,7 @@ class EndBookingView(LoginRequiredMixin, View):
                 Перенаправляет на страницу управления бронированиями.
         """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
-        booking.end_time = timezone.now()
+        booking.booking_end_time = timezone.now()
         booking.save()
 
         end_booking(self.kwargs["pk"])
@@ -376,7 +383,7 @@ class ProlongBookingView(LoginRequiredMixin, View):
             Booking.objects.get(pk=self.kwargs["pk"]).notify_schedule.delete()
         except Exception as ex:
             logger.error(ex)
-        new_end_time = booking.end_time + timezone.timedelta(minutes=6)
+        new_end_time = booking.end_time + timezone.timedelta(minutes=30)
         booking.end_time = new_end_time  # Время продления бронирования
 
         booking.notify_schedule = schedule(
@@ -393,6 +400,11 @@ class ProlongBookingView(LoginRequiredMixin, View):
             next_run=new_end_time,
         )
         booking.save()
+
+        send_custom_message(
+            user=booking.user,
+            msg="Ваше бронирование успешно продлено на 30 мин.",
+        )
 
         if request.user.is_staff:
             return redirect("parking-management")
@@ -429,6 +441,33 @@ class DeleteBookingView(LoginRequiredMixin, View):
         """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.delete()
+        if request.user.is_staff:
+            return redirect("parking-management")
+        else:
+            return redirect("booking-user")
+
+
+class CancelBookingView(LoginRequiredMixin, View):
+    """
+    Представление для удаления бронирования.
+
+    Атрибуты:
+        model (Model):
+            Модель бронирования.
+    """
+
+    model = Booking
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
+        booking.is_canceled = True
+        booking.save()
+
+        send_custom_message(
+            user=booking.user,
+            msg="Ваше бронирование было отменено, создайте новую заявку на другое время.",
+        )
+
         if request.user.is_staff:
             return redirect("parking-management")
         else:

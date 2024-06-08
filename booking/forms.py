@@ -1,31 +1,42 @@
+from datetime import datetime
+
 from django import forms
-from django.forms import ModelForm, DateTimeInput
+from django.forms import ModelForm, DateTimeInput, TimeInput
 from django.utils import timezone
 
 from .models import Booking
 
 
+class TimeOnlyField(forms.Field):
+    def __init__(self, *args, **kwargs):
+        kwargs["widget"] = TimeInput(attrs={"type": "time"})
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        # Parse the time input
+        try:
+            time_obj = datetime.strptime(value, "%H:%M").time()
+        except ValueError:
+            raise forms.ValidationError("Введите правильное время.")
+
+        # Combine with today's date
+        today = timezone.now().date()
+        return datetime.combine(today, time_obj)
+
+
 class BookingAddForm(ModelForm):
-    """
-    Форма для создания бронирования.
-    """
+    booking_start_time = TimeOnlyField(label="Начальное время бронирования")
+    booking_end_time = TimeOnlyField(label="Конечное время бронирования")
 
     class Meta:
         model = Booking
         fields = ("booking_start_time", "booking_end_time")
-        labels = {
-            "booking_start_time": "Начальное время бронирования",
-            "booking_end_time": "Конечное время бронирования",
-        }
-        widgets = {
-            "booking_start_time": DateTimeInput(attrs={"type": "datetime-local"}),
-            "booking_end_time": DateTimeInput(attrs={"type": "datetime-local"}),
-        }
 
     def clean(self):
         cleaned_data = super().clean()
         booking_start_time = cleaned_data.get("booking_start_time")
         booking_end_time = cleaned_data.get("booking_end_time")
+
         if booking_start_time and booking_end_time:
             if booking_start_time >= booking_end_time:
                 raise forms.ValidationError(
@@ -35,6 +46,7 @@ class BookingAddForm(ModelForm):
                 raise forms.ValidationError(
                     "Минимальная продолжительность бронирования должна быть не менее двух часов."
                 )
+
         return cleaned_data
 
 
