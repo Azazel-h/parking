@@ -37,8 +37,13 @@ def end_booking(booking_id: int) -> None:
         booking: Booking = Booking.objects.get(pk=booking_id)
 
         duration = booking.booking_end_time - booking.booking_start_time
-        duration_in_hours = duration.total_seconds() / 3600
-        total_cost = decimal.Decimal(duration_in_hours) * booking.parking.price
+        duration_in_minutes = duration.total_seconds() / 60
+
+        duration_in_minutes -= 10
+        if duration_in_minutes <= 0:
+            duration_in_minutes = 0
+
+        total_cost = decimal.Decimal(duration_in_minutes) * booking.parking.price
 
         booking.user.balance -= total_cost
         if booking.user.balance < 0:
