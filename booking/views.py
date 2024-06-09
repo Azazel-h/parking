@@ -42,16 +42,15 @@ class AddBookingView(LoginRequiredMixin, View):
             parking = get_object_or_404(ParkingArea, pk=kwargs["pk"])
 
             # Check for existing active bookings
-            now = timezone.now()
             existing_booking = Booking.objects.filter(
-                user=request.user, booking_end_time__gt=now, is_canceled=False
+                user=request.user, end_time__isnull=True, is_canceled=False
             ).first()
 
             if not existing_booking:
                 new_booking_data = {
                     "user": request.user,
                     "parking": parking,
-                    "creation_time": now,
+                    "creation_time": timezone.localtime(),
                     "booking_start_time": form_data.get("booking_start_time"),
                     "booking_end_time": form_data.get("booking_end_time"),
                     "start_time": None,
@@ -106,7 +105,7 @@ class ManagementView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         parking = get_object_or_404(ParkingArea, manager=self.request.user)
         bookings = Booking.objects.filter(
-            parking=parking, is_canceled=False, end_time__gt=timezone.now()
+            parking=parking, is_canceled=False, end_time__isnull=True
         ).order_by("start_time")
 
         slots = {}
@@ -139,9 +138,14 @@ class ManagementView(LoginRequiredMixin, ListView):
             booking_start_time_local_rounded = datetime.time(
                 booking_start_time_local.hour, 0
             )
-            booking_end_time_local_rounded = datetime.time(
-                (booking_end_time_local.hour + 1) % 24, 0
-            )
+
+            if booking_end_time_local.minute > 0:
+                booking_end_time_local_rounded = datetime.time(
+                    (booking_end_time_local.hour + 1) % 24, 0
+                )
+            else:
+                booking_end_time_local_rounded = booking_end_time_local
+
             logger.debug(
                 f"{booking_start_time_local} - {time_hour} - {booking_end_time_local} - {booking.id}"
             )
@@ -228,7 +232,6 @@ class ConfirmBookingView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         booking = Booking.objects.get(pk=self.kwargs["pk"])
         booking.conformation_time = timezone.now()
-        booking.end_time = booking.booking_end_time
         booking.slot_number = request.POST.get("slot_number")
         booking.save()
 
@@ -237,7 +240,7 @@ class ConfirmBookingView(LoginRequiredMixin, View):
             "booking.tasks.notify_user",
             booking.id,
             schedule_type="O",
-            next_run=booking.end_time - timezone.timedelta(minutes=5),
+            next_run=booking.booking_end_time - timezone.timedelta(minutes=5),
         )
 
         # Установка расписания для окончания бронирования
@@ -245,7 +248,7 @@ class ConfirmBookingView(LoginRequiredMixin, View):
             "booking.tasks.end_booking",
             booking.id,
             schedule_type="O",
-            next_run=booking.end_time,
+            next_run=booking.booking_end_time,
         )
         booking.save()
 
@@ -337,7 +340,7 @@ class EndBookingView(LoginRequiredMixin, View):
                 Перенаправляет на страницу управления бронированиями.
         """
         booking: Booking = Booking.objects.get(pk=self.kwargs["pk"])
-        booking.booking_end_time = timezone.now()
+        booking.end_time = booking.booking_end_time
         booking.save()
 
         end_booking(self.kwargs["pk"])

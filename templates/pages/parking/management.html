@@ -45,7 +45,7 @@
                             <td>{{ record.user.last_name }}</td>
                             <td>{{ record.booking_start_time }} - {{ record.booking_end_time }} </td>
                             <td>
-                                {% if record.booking_end_time > now %}
+                                {% if record.booking_end_time > now and not record.end_time %}
                                     <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
                                         {% csrf_token %}
                                         <input type="submit" class="btn btn-warning" value="Закончить">

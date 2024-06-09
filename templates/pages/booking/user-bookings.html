@@ -49,7 +49,7 @@
                                     {% endif %}
                                 </td>
 
-                                {% if record.booking_end_time is not None and record.booking_end_time > now and not record.is_canceled and record.conformation_time %}
+                                {% if record.booking_end_time and not record.end_time and record.booking_end_time > now and not record.is_canceled and record.conformation_time %}
                                     <td>
                                         <form method="POST" action="{% url 'end-booking' pk=record.pk %}">
                                             {% csrf_token %}
